@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mata el Hambre - Login</title>
+    <link rel="stylesheet" href="{% static 'core/css/login.css' %}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-container">
+                <img src="{% static 'core/img/imagen.jpg' %}" alt="Logo Mata el Hambre">
+            </div>
+            <h1>Mata el Hambre</h1>
+        </div>
+        
+        <div class="login-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="error-message">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="button-group">
+                    <button type="submit" class="login-button">Iniciar Sesión</button>
+                    <a href="{% url 'registro' %}"><button type="button" class="register-button">Registrarse</button></a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="login-footer">
+            Mata el Hambre - Todos los derechos reservados
+        </div>
+    </div>
+</body>
+</html>

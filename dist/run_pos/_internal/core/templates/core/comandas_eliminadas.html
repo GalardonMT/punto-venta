@@ -1,0 +1,97 @@
+{% extends "core/plantilla.html" %}
+{% load static %}
+
+{% block head %}
+    <head>
+        <title>Mata el Hambre - CRUD</title>
+        <link rel="stylesheet" href="{% static 'core/css/venta.css' %}">
+        <link rel="stylesheet" href="{% static 'core/css/comandas_eliminadas.css' %}">
+    </head>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="content-frame">
+        <div class="content-header">
+            <h2>📄 Comandas Eliminadas</h2>
+            <a href="{% url 'venta' %}">
+                <button class="boton-agregar">← Volver a ventas</button>
+            </a>
+            <button id="btnEliminarTodas" class="boton-modal rojo">Limpiar comandas eliminadas</button>
+        </div>
+
+        <div class="venta-panel">
+            <div class="seccion-comandas">
+                <div class="titulo">🔴 Historial de Eliminaciones</div>
+                <div class="contenedor-burbujas" id="burbujasEliminadas">
+                    {% for comanda in comandas %}
+                        <div class="burbuja burbuja-eliminada"
+                             data-id="{{ comanda.comanda_id }}"
+                             data-cliente="{{ comanda.nombre_cliente }}"
+                             data-total="{{ comanda.total }}"
+                             data-motivo="{{ comanda.motivo }}"
+                             data-empleado="{{ comanda.eliminado_por.username }}"
+                             data-fecha="{{ comanda.fecha_eliminacion|date:'d/m/Y H:i' }}">
+                            <div class="estado estado-eliminada">Eliminada</div>
+                            <div>Cliente: {{ comanda.nombre_cliente|default:"Desconocido" }}</div>
+                            <div class="numero-comanda">#{{ comanda.comanda_id }}</div>
+                        </div>
+                    {% empty %}
+                        <p>No hay comandas eliminadas.</p>
+                    {% endfor %}
+                </div>
+                <!-- Paginación -->
+                <div class="paginacion">
+                    Página {{ comandas.number }} de {{ comandas.paginator.num_pages }}
+                    {% if comandas.has_previous %}
+                        <a href="?page={{ comandas.previous_page_number }}">Anterior</a>
+                    {% endif %}
+                    {% if comandas.has_next %}
+                        <a href="?page={{ comandas.next_page_number }}">Siguiente</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de detalle -->
+<div id="modalDetalleEliminada" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModalDetalle()">&times;</span>
+        <h3>Detalle de Comanda Eliminada</h3>
+        <p><strong>ID:</strong> <span id="detalleId"></span></p>
+        <p><strong>Cliente:</strong> <span id="detalleCliente"></span></p>
+        <p><strong>Total:</strong> $<span id="detalleTotal"></span></p>
+        <p><strong>Motivo:</strong> <span id="detalleMotivo"></span></p>
+        <p><strong>Eliminado por:</strong> <span id="detalleEmpleado"></span></p>
+        <p><strong>Fecha:</strong> <span id="detalleFecha"></span></p>
+    </div>
+</div>
+
+<!-- Modal de verificación admin -->
+<div id="modalVerificacionAdmin" class="modal">
+  <div class="modal-contenido">
+    <span class="cerrar" onclick="cerrarModalAdmin()">&times;</span>
+    <h3>Verificación de administrador</h3>
+    <form id="formVerificacionAdmin" onsubmit="verificarAdmin(event)">
+      <div class="form-group">
+        <label for="adminUsuario">Usuario</label>
+        <input type="text" id="adminUsuario" name="adminUsuario" required>
+      </div>
+      <div class="form-group">
+        <label for="adminPass">Contraseña</label>
+        <input type="password" id="adminPass" name="adminPass" required>
+      </div>
+      <button type="submit" class="boton-modal rojo">Confirmar</button>
+    </form>
+  </div>
+</div>
+
+
+<script>
+window.csrfToken = '{{ csrf_token }}';
+window.eliminarComandasUrl = "{% url 'eliminar_comandas_con_verificacion' %}";
+</script>
+<script src="{% static 'core/js/comandas_eliminadas.js' %}"></script>
+{% endblock %}

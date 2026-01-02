@@ -1,0 +1,308 @@
+/* productos.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Imagen de producto en la tabla */
+.img-producto {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+    margin: auto;
+}
+
+/* Botón para abrir el modal */
+.boton-agregar {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 12px 24px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.boton-agregar:hover {
+    background-color: #218838;
+}
+
+/* ---------- MODAL ---------- */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-contenido {
+    background-color: #fff;
+    margin: 3% auto;       /* un poco menos de margen arriba para que suba */
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 600px;          /* más ancho */
+    max-width: 95%;        /* para que no se salga en pantallas pequeñas */
+    max-height: 80vh;      /* máximo alto basado en viewport */
+    overflow: hidden;      /* para evitar que se salga */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ajustar el contenedor de la lista */
+.modal-contenido ul {
+    margin-top: 15px;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;      /* scroll vertical */
+    max-height: 300px;     /* altura fija para scroll */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+/* Ajustar el li para que tenga un poco de padding y buen espacio */
+.modal-contenido ul li {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+/* El último elemento no tiene borde abajo */
+.modal-contenido ul li:last-child {
+    border-bottom: none;
+}
+
+/* Botón cerrar modal */
+.cerrar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.cerrar:hover {
+    color: #000;
+}
+
+/* Formulario dentro del modal */
+.modal-contenido form {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-contenido h3 {
+    margin-bottom: 15px;
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+}
+
+.modal-contenido label {
+    margin-top: 12px;
+    font-weight: bold;
+    color: #444;
+}
+
+.modal-contenido input[type="text"],
+.modal-contenido input[type="number"],
+.modal-contenido textarea,
+.modal-contenido select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+    background-color: #f8f9fa;
+    transition: border-color 0.2s;
+}
+
+.modal-contenido input:focus,
+.modal-contenido select:focus,
+.modal-contenido textarea:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+/* Botón de envío dentro del modal */
+.modal-contenido button[type="submit"] {
+    margin-top: 20px;
+    background-color: #28a745;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.modal-contenido button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* ---------- TABLA PRODUCTOS ---------- */
+
+table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+table td button {
+    padding: 6px 10px;
+    font-size: 14px;
+    min-width: 80px;
+}
+
+tr td {
+    transition: all 0.2s ease-in-out;
+}
+
+table select {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+table input[type="text"],
+table input[type="number"] {
+    width: 90%;
+    padding: 6px 8px;
+    font-size: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+table input[type="file"] {
+    padding: 4px;
+}
+
+table form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+table button {
+    margin: 2px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    transition: background-color 0.2s ease-in-out;
+}
+
+table button:hover {
+    background-color: #0056b3;
+}
+
+/* ---------- DROPZONE para imagen ---------- */
+
+.dropzone {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    position: relative;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.dropzone:hover {
+    border-color: #28a745;
+    background-color: #f0fff0;
+}
+
+.dropzone input[type="file"] {
+    display: none;
+}
+
+#dropzone-text {
+    font-size: 16px;
+    color: #666;
+}
+
+/* ---------- SELECT ---------- */
+
+.select-categoria {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 16px;
+    margin-top: 8px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='30,50 70,90 110,50' stroke='%23666' stroke-width='10' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.select-categoria:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+.categoria-scroll {
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.categoria-scroll select {
+    width: 100%;
+    min-height: 38px;
+}
+
+#modalCategoria ul {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table th {
+    background-color: #e6b800;
+    color: #333;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+}

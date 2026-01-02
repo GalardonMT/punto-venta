@@ -1,0 +1,63 @@
+{% load static %}
+{% load custom_tags %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mata el Hambre{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/plantilla.css' %}">
+
+    {% block head %}{% endblock %}
+</head>
+
+
+<body>
+    <div class="sidebar">
+        <h1>Mata el Hambre</h1>
+        <img src="{% static 'core/img/imagen.jpg' %}" alt="Logo Mata el Hambre">
+        
+        <div class="nav-buttons">
+            <a href="{% url 'inicio' %}"><button class="nav-button">Inicios</button></a>
+            <a href="{% url 'venta' %}"><button class="nav-button">Punto de venta</button></a>
+            
+            <!-- Boton solo puede ser visto por admin o por dueños -->
+            {% if request.user|has_group:"Dueños" %}
+                <a href="{% url 'productos' %}"><button class="nav-button">Productos</button></a>
+                <a href="{% url 'reportes' %}"><button class="nav-button">Reportes</button></a>
+                <a href="{% url 'usuarios' %}"><button class="nav-button">Usuarios</button></a>
+            {% endif %}
+
+
+            <a href="{% url 'logout' %}" class="logout-btn" ><button class="nav-logout-button">Cerrar Sesión</button></a>
+        </div>
+    </div>
+    {% block content %}{% endblock %}
+    
+    {% if messages %}
+    <div class="toast-container">
+        {% for message in messages %}
+            <div class="toast {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</body>
+
+<script>
+    // Oculta los mensajes despues de 4 segundos
+    setTimeout(() => {
+        document.querySelectorAll('.toast').forEach(toast => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            toast.style.pointerEvents = 'none';
+        });
+    }, 4000);
+</script>
+
+</html>

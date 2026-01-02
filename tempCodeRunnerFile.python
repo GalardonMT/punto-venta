@@ -1,0 +1,8 @@
+from escpos.printer import Usb
+
+p = Usb(0x04b8, 0x0e15)  # VendorID y ProductID (cambia según modelo)
+p.text("Boleta N°001\n")
+p.set(align='center', bold=True)
+p.text("TOTAL: $3.500\n")
+p.qr("https://tupagina.cl", size=6)
+p.cut()

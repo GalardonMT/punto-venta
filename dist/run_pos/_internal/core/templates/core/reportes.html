@@ -1,0 +1,121 @@
+{% extends "core/plantilla.html" %}
+{% load static %}
+
+{% block head %}
+    <head>
+        <title>Mata el Hambre - CRUD</title>
+        <link rel="stylesheet" href="{% static 'core/css/reportes.css' %}">
+    </head>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="content-frame">
+        <div class="content-header header-bar">
+            <h2>📊 Reportes de Ventas</h2>
+            <div class="select-container">
+                <form method="get" style="display:flex; align-items:center; gap:10px;">
+                    <label for="filtro" class="orden">Ver:</label>
+                    <select name="filtro" id="filtro" onchange="this.form.submit()" class="select-filtroR">
+                        <option value="diario" {% if filtro == 'diario' %}selected{% endif %}>Diario</option>
+                        <option value="semanal" {% if filtro == 'semanal' %}selected{% endif %}>Semanal</option>
+                        <option value="mensual" {% if filtro == 'mensual' %}selected{% endif %}>Mensual</option>
+                    </select>
+                </form>
+                <a href="{% url 'exportar_reportes_mes' %}" class="select-filtroR">Exportar Reportes del Mes a Excel</a>
+                <button type="button" class="select-filtroR" onclick="imprimirVentasDia()">Ventas finales del día</button>
+            </div>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Empleado</th>
+                    <th>Método de Pago</th>
+                    <th>Efectivo</th>
+                    <th>Tarjeta Debito</th>
+                    <th>Tarjeta Credito</th>
+                    <th>Transferencia</th>
+                    <th>Servicio</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comanda in historial %}
+                <tr>
+                    <td>{{ comanda.id }}</td>
+                    <td>{{ comanda.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>{{ comanda.nombre_cliente }}</td>
+                    <td>{{ comanda.empleado.username }}</td>
+                    <td>{{ comanda.metodo_pago|default:"-" }}</td>
+                    <td>${{ comanda.monto_efectivo|default:"0" }}</td>
+                    <td>${{ comanda.monto_tarjeta_debito|default:"0" }}</td>
+                    <td>${{ comanda.monto_tarjeta_credito|default:"0" }}</td>
+                    <td>${{ comanda.monto_transferencia|default:"0" }}</td>
+                    <td>{{ comanda.tipo_servicio|default:"-" }}</td>
+                    <td>${{ comanda.total }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align:center;">No hay registros disponibles para este período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="barra-inferior">
+            <div class="paginacion-inferior">
+                {% if historial.has_other_pages %}
+                    <div class="pagination-buttons">
+                        {% if historial.has_previous %}
+                            <a href="?page={{ historial.previous_page_number }}&filtro={{ filtro }}">&laquo; Anterior</a>
+                        {% endif %}
+
+                        <span>Página {{ historial.number }} de {{ historial.paginator.num_pages }}</span>
+
+                        {% if historial.has_next %}
+                            <a href="?page={{ historial.next_page_number }}&filtro={{ filtro }}">Siguiente &raquo;</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="total-general"> 
+                <strong>
+                    Total General 
+                    {% if filtro == 'diario' %}
+                        Diario:
+                    {% elif filtro == 'semanal' %}
+                        Semanal:
+                    {% elif filtro == 'mensual' %}
+                        Mensual:
+                    {% else %}
+                        :
+                    {% endif %}
+                </strong>
+                ${{ total_ventas|floatformat:0 }}
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+function imprimirVentasDia() {
+    fetch("{% url 'imprimir_boleta_ventas_dia' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+        }
+    })
+    .then(response => response.text())
+    .then(msg => {
+        alert(msg); // Muestra mensaje de éxito
+    })
+    .catch(error => {
+        alert("Error al imprimir: " + error);
+    });
+}
+</script>
+{% endblock %}

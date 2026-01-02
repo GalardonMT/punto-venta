@@ -1,0 +1,719 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+.content-header h2 {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.venta-panel {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.cerrar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.cerrar:hover {
+    color: #000;
+}
+
+.seccion-comandas { flex: 1; }
+
+.titulo {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.boton-agregar {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.boton-agregar:hover { background-color: #218838; }
+
+.contenedor-burbujas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.burbuja {
+    background-color: #fff;
+    border: 2px solid #ccc;
+    border-radius: 15px;
+    padding: 10px 15px;
+    width: 160px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.burbuja:hover {
+    transform: scale(1.05);
+    background-color: #f1f1f1;
+}
+
+.estado {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.estado-pendiente { color: #fd7e14; }
+
+.estado-pagado { color: #28a745; }
+
+.numero-comanda {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    text-align: right;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-contenido {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+
+.modal-contenidoventa {
+    background-color: #fff;
+    margin: 1% auto;
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 95vw;
+    max-width: 1800px;
+    height: 90vh;
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.modal-contenidoventa input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 15px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.modal-contenidoventa input[type="text"]:focus {
+    outline: none;
+    border-color: #e6b800;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(230, 184, 0, 0.2);
+}
+
+.burbuja-producto {
+    width: 215px;
+    height: 235px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    border: 1px solid #ddd;
+    text-align: center;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.burbuja-producto:hover {
+    transform: scale(1.05);
+    background-color: #e7fbe7;
+}
+
+.img-productov {
+    width: 135px;
+    height: 135px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.nombre-producto {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 10px;
+}
+
+/* Campos y selects */
+.form-group { margin-bottom: 1.0rem; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+        
+.form-group input:focus {
+    border-color: #e6b800;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(230, 184, 0, 0.2);
+}
+
+#servicio, #metodo_pago {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 15px;
+    color: #333;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    transition: all 0.3s ease;
+}
+
+#servicio:focus, #metodo_pago:focus {
+    outline: none;
+    border-color: #e6b800;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(230, 184, 0, 0.2);
+}
+
+#servicio:hover, #metodo_pago:hover {
+    border-color: #ccc;
+}
+
+#pago_mixto_campos {
+    background: #f8fff6; 
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px dashed #a7e7a1; 
+}
+
+
+#pago_mixto_campos label {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+#monto_efectivo, #monto_tarjeta_debito, #monto_tarjeta_credito, #monto_transferencia {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    background-color: #fff;
+}
+
+.barra-busqueda {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.barra-busqueda input {
+    width: 100%;
+    padding: 10px 35px 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.icono-busqueda {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+}
+
+/* Fondo oscuro para el modal */
+#modalComanda,
+#modalEliminarComanda {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Contenido del modal eliminar comanda */
+.modal-eliminar {
+    background-color: #fff;
+    padding: 24px 28px;
+    border-radius: 12px;
+    width: fit-content;
+    max-width: 90vw;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Titulo y subtitulo */
+.modal-eliminar h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.modal-eliminar p {
+    font-size: 14px;
+    margin: 0;
+    color: #555;
+}
+
+/* Inputs y textarea */
+.modal-eliminar input,
+.modal-eliminar textarea {
+    width: 100%;
+    max-width: 280px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s;
+}
+
+.modal-eliminar input:focus,
+.modal-eliminar textarea:focus {
+    outline: none;
+    border-color: #e6b800;
+    background-color: #fff;
+}
+
+/* Etiquetas */
+.modal-eliminar label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Botón de acción */
+.modal-eliminar button {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    max-width: 220px;
+    align-self: center;
+}
+
+.modal-eliminar button:hover {
+    background-color: #c82333;
+}
+
+/* Boton cerrar */
+.modal-eliminar .cerrar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-eliminar .cerrar:hover {
+    color: #000;
+}
+
+/* Mensaje de error */
+.modal-eliminar .mensaje-error {
+    color: #dc3545;
+    font-size: 13px;
+    margin-top: -8px;
+}
+
+
+
+.boton-modal {
+    flex: 1;
+    padding: 12px;
+    font-weight: bold;
+    font-size: 15px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.boton-modal.verde { background-color: #28a745; }
+.boton-modal.verde:hover { background-color: #218838; }
+
+.boton-modal.amarillo { background-color: #e6b800; }
+.boton-modal.amarillo:hover { background-color: #d4a900; }
+
+.boton-modal.rojo { background-color: #dc3545; }
+.boton-modal.rojo:hover { background-color: #c82333; }
+
+.contenido-scroll {
+    overflow-y: auto;
+    height: 100%;
+    scroll-behavior: smooth;
+}
+
+.scroll-detalle {
+    flex-grow: 1;                /* Ocupa el espacio disponible */
+    overflow-y: auto;            /* Solo aquí habrá scroll */
+    padding: 0 16px;             /* Ajusta a gusto */
+}
+
+.boton-cerrar-caja {
+    background-color: #dc3545;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+/* Para fijar encabezados */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 5;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Si tienes más de un sticky seguido (como barra de búsqueda), ajusta con top extra */
+.sticky-search {
+    position: sticky;
+    top: 50px; /* debajo del h2 */
+    background-color: white;
+    z-index: 4;
+    padding-top: 5px;
+    padding-bottom: 10px;
+}
+
+.footer-modal-comanda {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-top: 10px;
+    padding-bottom: 15px;
+    margin-top: auto;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.footer-modal-comanda h4 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    text-align: right;
+    color: #333;
+}
+
+.grupo-botones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.columna-izquierda {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    height: 100%;
+}
+
+.sticky-header-comanda {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    padding: 10px 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.modal-body-scrollable {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.sticky-header-comanda h2 {
+    margin-bottom: 8px;
+    font-size: 22px;
+}
+
+.contenido-formulario-comanda {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 10px;
+}
+
+.grupo-botones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+
+#pago_unico_campos {
+    background: #f8fff6; 
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px dashed #a7e7a1;
+    margin-bottom: 15px;
+}
+
+#pago_unico_campos label {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+}
+
+#pago_unico_campos input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+#pago_unico_campos input:focus {
+    border-color: #e6b800;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(230, 184, 0, 0.2);
+}
+
+.label-nota {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.textarea-nota {
+    width: 100%;
+    min-height: 80px; /* un poco más alto para comodidad */
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    resize: vertical; /* permitir solo redimensionar vertical */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: border-color 0.3s ease;
+}
+
+.textarea-nota:focus {
+    outline: none;
+    border-color: #007BFF; 
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+}
+
+#notaComanda {
+    resize: none; /* evita que el usuario cambie el tamaño */
+    height: 60px;  /* altura fija */
+}
+
+.categorias-selector {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    background: #fff;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.categoria-btn {
+    background: #f1f1f1;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 22px;
+    font-size: 15px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+    text-align: center;      
+    font-weight: bold;      
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.categoria-btn.activo,
+.categoria-btn:hover {
+    background: #e6b800;
+    color: #fff;
+}
+
+#modalDetalleCerrada .modal-contenido {
+    width: 500px;
+    max-width: 95vw;
+    max-height: 600px;   
+    overflow: hidden;
+    margin: 6% auto 1% auto;
+    padding: 20px 20px 10px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    position: relative; 
+}
+
+#detalleCerradaContenido {
+    height: 560px;               /* Altura fija para el modal */
+    overflow: hidden;            /* Evita scroll general en el contenedor */
+    display: flex;
+    flex-direction: column;
+}
+
+#modalDetalleCerrada .cerrar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    z-index: 10;
+    background: white;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#modalSuperAdmin {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999; /* Asegura que esté por encima de otros modales */
+    align-items: center;
+    justify-content: center;
+}
+
+#modalSuperAdmin > div {
+    z-index: 10000;
+}
+
+
+@media (max-width: 768px) {
+    .venta-panel {
+        flex-direction: column;
+    }
+
+    .modal-contenidoventa {
+        flex-direction: column;
+        height: auto;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+
+    .burbuja-producto {
+        width: 100%;
+    }
+
+    #servicio, #metodo_pago {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+}
+
+
+

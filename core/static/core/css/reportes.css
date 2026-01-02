@@ -1,0 +1,295 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+.contenedor-reportes {
+    max-width: 600px;      /* ancho máximo para no quedar muy ancho */
+    margin: 40px auto;     /* centrar horizontal y margen arriba/abajo */
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.titulo {
+    font-size: 26px;
+    margin-bottom: 20px;
+}
+
+/* --- Contenedor general para exportar reportes --- */
+.exportar-box {
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    text-align: center;       /* centra texto y etiquetas */
+    align-items: center;      /* centra hijos horizontalmente */
+}
+
+/* Formularios mensuales y anuales con mismas dimensiones y centrado */
+.form-exportar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;               /* que tome todo el ancho del box */
+    max-width: 400px;          /* ancho máximo consistente */
+    align-items: center;       /* centra inputs, labels y botones */
+}
+
+.form-exportar h3 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #333;
+    font-weight: bold;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;       /* centra label + select/input */
+    width: 100%;
+}
+
+.filtro-grupo label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.filtro-grupo select {
+    padding: 10px 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;               /* ocupa todo el ancho del grupo */
+    max-width: 250px;
+    text-align: center;        /* texto centrado dentro del select */
+    cursor: pointer;
+}
+
+/* Botones exportar con igual estilo */
+.form-exportar button {
+    width: 180px;
+    padding: 12px;
+    font-size: 16px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    text-align: center;        /* texto centrado */
+    margin: 0 auto;
+}
+
+.form-exportar button:hover {
+    background-color: #e6b800;
+}
+
+/* --- Otros estilos que tienes --- */
+
+.filtro-form {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filtro-form select {
+    padding: 6px 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    text-align: center; 
+}
+
+.tabla-container {
+    overflow-x: auto;
+}
+
+.tabla-reportes {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+.tabla-reportes thead {
+    background-color: #ffcc00;
+    color: white;
+}
+
+.tabla-reportes th, .tabla-reportes td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.tabla-reportes tr:hover {
+    background-color: #f1f1f1;
+}
+
+.no-resultados {
+    text-align: center;
+    padding: 20px;
+    color: #ffcc00
+}
+
+.total-final {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 18px;
+    color: #e6b800;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.select-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.select-container label {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.select-filtro {
+    padding: 8px 14px;
+    font-size: 15px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: black;
+    border: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: background-color 0.3s ease;
+}
+
+/* SELECT EN REPORTES.HTML*/
+.select-filtroR {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.orden {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.select-filtro:hover {
+    background-color: #ffffff;
+}
+
+.select-filtro:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #aaa;
+}
+
+/* Para que .main-content siempre ocupe el alto completo */
+.main-content {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Este asegura que el contenido crezca y empuje la barra inferior hacia abajo */
+.content-frame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Barra inferior fija dentro del contenido */
+.barra-inferior {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding: 15px 20px;
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.05);
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Paginación centrada */
+.paginacion-inferior {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.pagination-buttons a {
+    text-decoration: none;
+    color: #000000;
+    font-weight: bold;
+}
+
+.pagination-buttons span {
+    font-weight: bold;
+    color: #555;
+}
+
+/* Total general a la derecha */
+.total-general {
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+    text-align: right;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table th {
+    background-color: #e6b800;
+    color: #333;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+}

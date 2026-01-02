@@ -1,0 +1,57 @@
+{% extends "core/plantilla.html" %}
+{% load static %}
+
+{% block head %}
+<head>
+    <title>Exportar Reportes a Excel - Mata el Hambre</title>
+    <link rel="stylesheet" href="{% static 'core/css/reportes.css' %}">
+</head>
+{% endblock %}
+
+{% block content %}
+<div class="contenedor-reportes">
+    <h2 class="titulo">📤 Exportar Reportes a Excel</h2>
+
+    <div class="exportar-box">
+        <form method="get" action="{% url 'exportar_reportes_mes' %}" class="form-exportar">
+            <h3>📅 Exportar Reportes Mensuales a Excel</h3>
+            <div class="filtro-grupo">
+                <label for="mes">Mes:</label>
+                <select name="mes" id="mes" class="select-filtro">
+                    {% for numero, nombre in meses %}
+                        <option value="{{ numero }}" {% if numero == mes_seleccionado %}selected{% endif %}>{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="año">Año:</label>
+                <select name="año" id="año" class="select-filtro">
+                    {% for y in años %}
+                        <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" name="exportar" value="1" class="select-filtro">Exportar Mensual</button>
+        </form> 
+    </div>
+
+    <div class="exportar-box">
+        <form method="get" action="{% url 'exportar_reportes_anual' %}" class="form-exportar">
+            <h3>📅 Exportar Reportes Anuales a Excel</h3>
+            <div class="filtro-grupo">
+                <label for="año_anual">Año:</label>
+                <select name="año" id="año_anual" class="select-filtro">
+                    {% for y in años %}
+                        <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" name="exportar_anual" value="1" class="select-filtro">Exportar Anual</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

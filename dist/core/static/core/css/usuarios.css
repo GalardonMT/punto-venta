@@ -1,0 +1,546 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+.cerrar {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.cerrar:hover {
+    color: #000;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.user-table th {
+    background-color: #e6b800;
+    color: #333;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+}
+
+.user-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.user-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.user-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.status-active {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* --- Estilos del Modal (Modificados) --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+}
+
+.modal-contenido {
+    background-color: #fff;
+    margin: 5% auto; /* Reducido el margen superior para aprovechar espacio */
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1200px; /* Ancho máximo mucho mayor (antes era 500px) */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+/* Botón cancelar */
+.btn-cancelar {
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+.btn-cancelar:hover {
+    background-color: #bbb;
+}
+
+/* Contenedor de burbujas (comandas) */
+.burbujas-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Más espacio entre burbujas */
+    justify-content: flex-start;
+    margin-top: 20px;
+}
+
+/* Burbujas individuales (comandas) */
+.comanda-burbuja {
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    width: calc(25% - 15px); /* 4 columnas por defecto (25% del ancho) */
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comanda-burbuja:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.comanda-burbuja h4 {
+    margin: 0 0 12px;
+    color: #333;
+    font-size: 16px;
+}
+
+.comanda-burbuja p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* --- Botones y otros estilos --- */
+.btn-detalle {
+    background-color: #e6b800;
+    color: #333;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: 600;
+}
+
+.btn-detalle:hover {
+    background-color: #ffcc00;
+}
+
+/* --- Responsive --- */
+@media screen and (max-width: 1200px) {
+    .comanda-burbuja {
+        width: calc(33.33% - 15px); /* 3 columnas */
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .comanda-burbuja {
+        width: calc(50% - 15px); /* 2 columnas */
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .modal-contenido {
+        width: 95%;
+        padding: 20px;
+    }
+    .comanda-burbuja {
+        width: 100%; /* 1 columna */
+    }
+}
+
+/* Estilos restantes (mantenidos) */
+.mensaje-error {
+    color: #dc3545;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #f8d7da;
+    border-radius: 4px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.9rem;
+}
+
+#admin, #pass {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #f8fafc;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+#admin:focus, #pass:focus {
+    outline: none;
+    border-color: #e6b800;
+    box-shadow: 0 0 0 3px rgba(230, 184, 0, 0.2);
+    background-color: #fff;
+}
+
+.btn-confirmar {
+    margin-top: 20px;
+    background-color: #28a745;
+    border: none;
+    color: white;
+    padding: 10px 30px;
+    width: 100%;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-confirmar:hover {
+    background-color: #218838;
+}
+
+
+
+
+
+
+.comanda-burbuja.estado-abierta {
+    border-left: 5px solid #e6b800; /* Amarillo */
+    background-color: #fffdf5; /* Fondo claro amarillo */
+}
+
+.comanda-burbuja.estado-cerrada {
+    border-left: 5px solid #28a745; /* Verde */
+    background-color: #f5fff7; /* Fondo claro verde */
+}
+
+.comanda-burbuja .estado-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.estado-badge.abierta {
+    background-color: #e6b800;
+    color: #333;
+}
+
+.estado-badge.cerrada {
+    background-color: #28a745;
+    color: white;
+}
+
+
+.comanda-burbuja h4::after {
+    content: '▼';
+    float: right;
+    font-size: 12px;
+    transition: transform 0.3s;
+}
+
+.comanda-burbuja .detalle-productos.abierto ~ h4::after {
+    transform: rotate(180deg);
+}
+
+
+
+.detalle-productos {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    margin-top: 0;
+    padding: 0 10px;
+    background-color: #f9f9f9;
+    border-radius: 0 0 8px 8px;
+}
+
+.detalle-productos.abierto {
+    max-height: 500px; /* Ajusta según necesidad */
+    margin-top: 15px;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+.lista-productos {
+    list-style-type: none;
+}
+
+.lista-productos li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.lista-productos li:last-child {
+    border-bottom: none;
+}
+
+.producto-nombre {
+    font-weight: 600;
+}
+
+.producto-precio {
+    color: #28a745;
+}
+
+
+
+
+.modal-editar {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* para que flote en la pantalla */
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* Fondo oscuro traslúcido */
+    z-index: 1000; /* Por encima del resto */
+    overflow-y: auto;
+}
+
+.modal-contenido-editar {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 6px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    position: relative;
+}
+
+.cerrar-editar {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+.cerrar-editar:hover {
+    color: #000;
+}
+
+.label-editar {
+  display: block;
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+#modalEditarUsuario input[type="text"],
+#modalEditarUsuario input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#modalEditarUsuario input[type="text"]:focus,
+#modalEditarUsuario input[type="password"]:focus {
+  border-color: #007BFF; /* color celeste bonito */
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.btn-detalle.eliminar {
+    background-color: #f14747;
+    color: white;
+}
+
+.btn-detalle.desactivar {
+    background-color: #f19547;
+    color: white;
+}
+
+.btn-detalle.activar {
+    background-color: #47c774;
+    color: white;
+}
+
+/* Badge general */
+.grupo-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: white;
+    text-transform: capitalize;
+}
+
+/* Colores específicos por grupo */
+.grupo-dueños {
+    background-color: #4a90e2; /* Azul */
+}
+
+.grupo-empleados {
+    background-color: #7ed957; /* Verde */
+}
+
+.grupo-sin {
+    background-color: #ccc; /* Gris */
+    color: black;
+}
+
+.grupo-select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    background-color: #fff;
+    color: #333;
+    margin-bottom: 15px;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.grupo-select:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+    outline: none;
+}
+
+/* Estilos de cada opción */
+.grupo-select option {
+    font-weight: bold;
+    padding: 8px;
+}
+
+/* Colores opcionales dentro del select si quieres diferenciar visualmente */
+.grupo-select option[value="Dueños"] {
+    background-color: #e6f0ff;
+}
+
+.grupo-select option[value="Empleados"] {
+    background-color: #f1ffe6;
+}
+
+/* --- Modal de Confirmación de Eliminación --- */
+.modal-confirmar-eliminar {
+    display: none; /* Se muestra cuando se activa */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo translúcido */
+    overflow-y: auto;
+}
+
+.modal-contenido-eliminar {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px; /* Ancho máximo específico para el modal de eliminación */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-contenido-eliminar h3 {
+    color: #d32f2f; /* Rojo para resaltar peligro */
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+
+.modal-contenido-eliminar p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+/* Contenedor de los botones de confirmación */
+.botones-confirmacion-eliminar {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Botón de Confirmar (eliminar) */
+.btn-confirmar-eliminar {
+    padding: 10px 20px;
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.btn-confirmar-eliminar:hover {
+    background-color: #b71c1c;
+}
+
+/* Botón de Cancelar */
+.btn-cancelar-eliminar {
+    padding: 10px 20px;
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancelar-eliminar:hover {
+    background-color: #bbb;
+}

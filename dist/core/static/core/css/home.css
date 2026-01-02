@@ -1,0 +1,253 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+
+/* Barra lateral */
+.sidebar {
+    width: 250px;
+    background-color: #e6b800;
+    color: #333;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h1 {
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 24px;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.sidebar img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 30px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+
+a {
+    text-decoration: none;
+}
+        
+.nav-buttons {
+    width: 100%;
+    text-decoration: none;
+}
+
+.nav-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: #ffcc00;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.nav-logout-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: rgb(214, 61, 15);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: #ffdb4d;
+    transform: translateX(5px);
+    
+}
+
+/* Contenido principal */
+.main-content {
+    flex: 1;
+    padding: 30px;
+}
+        
+
+.content-frame {
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+.content-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.content-header h2 {
+    color: #333;
+}
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Estilos para el CRUD */
+.crud-actions {
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #f44336;
+    color: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* ----------- INICIO PERSONALIZADO ----------- */
+
+.welcome-box {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    margin-bottom: 30px;
+}
+
+.welcome-box h3 {
+    margin-bottom: 10px;
+    font-size: 22px;
+    color: #333;
+}
+
+.welcome-box p {
+    font-size: 16px;
+    color: #555;
+}
+
+.top-productos {
+    background-color: #fffaf0;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #e6b800;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.top-productos h4 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #cc9900;
+}
+
+.top-productos ol {
+    padding-left: 20px;
+    color: #333;
+}
+
+.top-productos li {
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.quick-actions {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.04);
+    margin-top: 30px;
+}
+
+.quick-actions h4 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+.quick-actions .btn {
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+}
+
+.quick-actions .btn-primary {
+    background-color: #4CAF50;
+}
+
+.quick-actions .btn-secondary {
+    background-color: #2196F3;
+}
+
+.quick-actions .btn-success {
+    background-color: #f57c00;
+}

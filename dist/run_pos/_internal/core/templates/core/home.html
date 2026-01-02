@@ -1,0 +1,66 @@
+{% extends "core/plantilla.html" %}
+{% load static %} 
+
+{% block head %}
+    <head>
+        <title>Mata el Hambre - CRUD</title>
+        <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+    </head>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="content-frame">
+        <div class="content-header">
+            <h2>📅 Inicio</h2>
+        </div>
+
+        <div class="welcome-box">
+            <h3>
+                Bienvenido,
+                {% if usuario.first_name %}
+                    {{ usuario.first_name }}
+                {% else %}
+                    {{ usuario.username }}
+                {% endif %}
+            </h3>
+            <p>Fecha: {{ hora_actual|date:"l d F Y" }}</p>
+            <p>Hora actual: <span id="horaActual"></span></p>
+        </div>
+
+        <div class="top-productos">
+            <h4>🥇 Top 3 productos más vendidos hoy:</h4>
+            <ol>
+                {% for prod in top_productos %}
+                    <li>{{ prod.producto__nombre }} - {{ prod.total_vendido }} vendidos</li>
+                {% empty %}
+                    <li>No hay ventas registradas hoy.</li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="quick-actions">
+            <h4>Accesos rápidos:</h4>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                <a href="{% url 'venta' %}" class="btn btn-primary">+ Nueva Comanda</a>
+                <a href="{% url 'productos' %}" class="btn btn-secondary">Gestionar Productos</a>
+                <a href="{% url 'reportes' %}" class="btn btn-success">Reportes</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function actualizarHora() {
+        const ahora = new Date();
+        const opciones = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const horaFormateada = ahora.toLocaleTimeString('es-CL', opciones);
+        document.getElementById('horaActual').textContent = horaFormateada;
+    }
+
+    setInterval(actualizarHora, 1000);
+    actualizarHora(); // Ejecuta una vez al cargar
+</script>
+
+{% endblock %}
