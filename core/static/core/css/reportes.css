@@ -1,252 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
+
+:root {
+    --report-bg: #e4f3f8;
+    --report-card: #ffffff;
+    --report-accent: #5fa7b7;
+    --report-accent-dark: #2d5560;
+    --report-danger: #dc5d5d;
+    --report-text: #103040;
+    --report-muted: #54707e;
+    --tabla-header-start: #d8f1ff;
+    --tabla-header-end: #76c4d9;
+    --tabla-header-text: #083a4a;
+    --tabla-border: #b6e0ec;
+    --tabla-row-alt: #f3fbff;
+    --tabla-row-hover: #e0f3fa;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
+    font-family: inherit;
 }
 
-.contenedor-reportes {
-    max-width: 600px;      /* ancho máximo para no quedar muy ancho */
-    margin: 40px auto;     /* centrar horizontal y margen arriba/abajo */
-    padding: 30px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
-}
-
-.titulo {
-    font-size: 26px;
-    margin-bottom: 20px;
-}
-
-/* --- Contenedor general para exportar reportes --- */
-.exportar-box {
-    max-width: 600px;
-    margin: 0 auto 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.06);
+.reportes-page {
     display: flex;
     flex-direction: column;
-    gap: 30px;
-
-    text-align: center;       /* centra texto y etiquetas */
-    align-items: center;      /* centra hijos horizontalmente */
+    gap: 24px;
 }
 
-/* Formularios mensuales y anuales con mismas dimensiones y centrado */
-.form-exportar {
+.export-page {
+    gap: 32px;
+}
+
+.reportes-hero {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;               /* que tome todo el ancho del box */
-    max-width: 400px;          /* ancho máximo consistente */
-    align-items: center;       /* centra inputs, labels y botones */
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: clamp(24px, 4vw, 36px);
+    border-radius: 24px;
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.45), rgba(255,255,255,0))
+                ,linear-gradient(135deg, #8cc7d6, #5fa7b7 65%);
+    color: #0f1b25;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
 }
 
-.form-exportar h3 {
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #333;
-    font-weight: bold;
-}
-
-.filtro-grupo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;       /* centra label + select/input */
-    width: 100%;
-}
-
-.filtro-grupo label {
-    font-weight: bold;
-    margin-bottom: 8px;
-    font-size: 16px;
-}
-
-.filtro-grupo select {
-    padding: 10px 14px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 100%;               /* ocupa todo el ancho del grupo */
-    max-width: 250px;
-    text-align: center;        /* texto centrado dentro del select */
-    cursor: pointer;
-}
-
-/* Botones exportar con igual estilo */
-.form-exportar button {
-    width: 180px;
-    padding: 12px;
-    font-size: 16px;
-    background-color: #28a745;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    text-align: center;        /* texto centrado */
-    margin: 0 auto;
-}
-
-.form-exportar button:hover {
-    background-color: #e6b800;
-}
-
-/* --- Otros estilos que tienes --- */
-
-.filtro-form {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.filtro-form select {
-    padding: 6px 10px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    text-align: center; 
-}
-
-.tabla-container {
-    overflow-x: auto;
-}
-
-.tabla-reportes {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-    box-shadow: 0 0 8px rgba(0,0,0,0.1);
-}
-
-.tabla-reportes thead {
-    background-color: #ffcc00;
-    color: white;
-}
-
-.tabla-reportes th, .tabla-reportes td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-    font-size: 14px;
-}
-
-.tabla-reportes tr:hover {
-    background-color: #f1f1f1;
-}
-
-.no-resultados {
-    text-align: center;
-    padding: 20px;
-    color: #ffcc00
-}
-
-.total-final {
-    text-align: right;
-    margin-top: 20px;
-    font-size: 18px;
-    color: #e6b800;
-    background-color: #fff;
-    padding: 10px;
-    border-radius: 6px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-}
-
-.select-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
-
-.select-container label {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.select-filtro {
-    padding: 8px 14px;
-    font-size: 15px;
-    border-radius: 8px;
-    background-color: #ffffff;
-    color: black;
-    border: none;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    transition: background-color 0.3s ease;
-}
-
-/* SELECT EN REPORTES.HTML*/
-.select-filtroR {
-    background-color: #28a745;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
-}
-
-.orden {
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-.select-filtro:hover {
-    background-color: #ffffff;
-}
-
-.select-filtro:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #aaa;
-}
-
-/* Para que .main-content siempre ocupe el alto completo */
-.main-content {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Este asegura que el contenido crezca y empuje la barra inferior hacia abajo */
-.content-frame {
+.hero-copy {
     flex: 1;
+    min-width: 260px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 12px;
 }
 
-/* Barra inferior fija dentro del contenido */
+.hero-copy h2 {
+    font-size: clamp(1.8rem, 4vw, 2.2rem);
+    font-weight: 600;
+}
+
+.hero-copy p {
+    color: rgba(15, 27, 37, 0.8);
+    max-width: 520px;
+    line-height: 1.4;
+}
+
+.hero-total {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.9);
+    padding: 16px 22px;
+    border-radius: 16px;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--report-text);
+    width: fit-content;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.hero-total span {
+    text-transform: capitalize;
+    font-size: 0.95rem;
+    color: var(--report-muted);
+}
+
+.hero-total strong {
+    font-size: 2rem;
+    letter-spacing: -1px;
+}
+
+.hero-actions {
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.hero-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #fff;
+}
+
+.hero-filter label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hero-filter select {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.92);
+    color: var(--report-text);
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.export-hint {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+    line-height: 1.4;
+} 
+
+.report-btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: var(--report-accent-dark);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    text-decoration: none;
+}
+
+.report-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.18);
+}
+
+.report-btn.ghost {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+}
+
+.report-btn.accent {
+    background: var(--report-danger);
+}
+
+.export-hero {
+    background: linear-gradient(135deg, #5fa7b7, #2f7080);
+}
+
+.tabla-wrapper {
+    background: var(--report-card);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.tabla-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.tabla-header h3 {
+    font-size: 1.25rem;
+    color: var(--report-text);
+}
+
+.tabla-header p {
+    color: var(--report-muted);
+    font-size: 0.95rem;
+}
+
+.tabla-pill {
+    background: rgba(92, 194, 177, 0.15);
+    color: var(--report-accent-dark);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.tabla-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--tabla-border);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 14px 32px rgba(8, 58, 74, 0.08);
+    --tabla-min-width: 960px;
+    margin-top: 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background: #fff;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, var(--tabla-header-start), var(--tabla-header-end));
+    color: var(--tabla-header-text);
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 22px;
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 22px;
+}
+
+.table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #d9edf4;
+    color: var(--report-text);
+    white-space: nowrap;
+}
+
+.table tbody tr:nth-child(even) {
+    background: var(--tabla-row-alt);
+}
+
+.table tbody tr:nth-child(odd) {
+    background: #fff;
+}
+
+.table tbody tr:hover {
+    background: var(--tabla-row-hover);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 .barra-inferior {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
-    padding: 15px 20px;
-    background-color: #fff;
-    border-top: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 0 6px rgba(0,0,0,0.05);
     gap: 20px;
+    padding: 20px 24px;
+    border-radius: 18px;
+    background: var(--report-card);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.07);
     flex-wrap: wrap;
 }
 
-/* Paginación centrada */
 .paginacion-inferior {
     flex: 1;
     display: flex;
@@ -255,41 +283,162 @@
 
 .pagination-buttons {
     display: flex;
+    gap: 16px;
     align-items: center;
-    gap: 12px;
-    font-size: 14px;
+    font-weight: 600;
 }
 
 .pagination-buttons a {
+    color: var(--report-accent-dark);
     text-decoration: none;
-    color: #000000;
-    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(95, 167, 183, 0.1);
 }
 
 .pagination-buttons span {
-    font-weight: bold;
-    color: #555;
+    color: var(--report-muted);
 }
 
-/* Total general a la derecha */
+.pagination-placeholder {
+    color: var(--report-muted);
+    font-weight: 500;
+}
+
 .total-general {
-    font-size: 18px;
-    color: #333;
-    font-weight: bold;
-    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 1rem;
+    color: var(--report-text);
 }
 
-.table {
+.total-general span {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.export-card {
+    background: var(--report-card);
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.export-card header h3 {
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    color: var(--report-text);
+}
+
+.export-card header p {
+    color: var(--report-muted);
+    line-height: 1.4;
+}
+
+.card-pill {
+    display: inline-flex;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(95, 167, 183, 0.15);
+    color: var(--report-accent-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.export-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+}
+
+.export-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: var(--report-muted);
+}
+
+.export-field span {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.export-field select {
+    border: 1px solid rgba(31,42,55,0.15);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--report-bg);
+    color: var(--report-text);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.export-field select:focus {
+    outline: none;
+    border-color: var(--report-accent);
+    box-shadow: 0 0 0 3px rgba(95, 167, 183, 0.2);
+}
+
+.export-card .report-btn {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
 }
 
-.table th {
-    background-color: #e6b800;
-    color: #333;
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: bold;
+@media (max-width: 900px) {
+    .hero-buttons {
+        flex-direction: column;
+    }
+
+    .report-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .tabla-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .tabla-scroll {
+        margin: 0 -8px;
+    }
+
+    .tabla-responsive .table thead th,
+    .tabla-responsive .table tbody td {
+        white-space: nowrap;
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+
+    .barra-inferior {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .total-general {
+        align-items: flex-start;
+    }
+
+    .export-card {
+        padding: 22px;
+    }
 }

@@ -68,3 +68,57 @@
     background-color: #d1ecf1;
     color: #0c5460;
 }
+
+/* ---------- Tablas Responsivas ---------- */
+.tabla-responsive {
+    --tabla-min-width: 640px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 20px;
+    border-radius: 18px;
+}
+
+.tabla-responsive table {
+    width: 100%;
+    min-width: var(--tabla-min-width);
+}
+
+.tabla-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.tabla-responsive::-webkit-scrollbar-thumb {
+    background: rgba(31, 48, 64, 0.25);
+    border-radius: 8px;
+}
+
+.tabla-responsive::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+    .tabla-responsive {
+        margin-top: 16px;
+    }
+
+    .tabla-responsive table {
+        min-width: calc(var(--tabla-min-width) - 80px);
+    }
+}
+
+@media (max-width: 560px) {
+    .tabla-responsive {
+        border-radius: 14px;
+    }
+
+    .tabla-responsive table {
+        font-size: 0.85rem;
+        min-width: calc(var(--tabla-min-width) - 140px);
+    }
+
+    .tabla-responsive th,
+    .tabla-responsive td {
+        padding: 10px 8px;
+    }
+}

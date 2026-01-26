@@ -3,54 +3,81 @@
 
 {% block head %}
 <head>
-    <title>Exportar Reportes a Excel - Mata el Hambre</title>
+    <title>Punto de Venta - Exportar Reportes</title>
     <link rel="stylesheet" href="{% static 'core/css/reportes.css' %}">
 </head>
 {% endblock %}
 
 {% block content %}
-<div class="contenedor-reportes">
-    <h2 class="titulo">📤 Exportar Reportes a Excel</h2>
-
-    <div class="exportar-box">
-        <form method="get" action="{% url 'exportar_reportes_mes' %}" class="form-exportar">
-            <h3>📅 Exportar Reportes Mensuales a Excel</h3>
-            <div class="filtro-grupo">
-                <label for="mes">Mes:</label>
-                <select name="mes" id="mes" class="select-filtro">
-                    {% for numero, nombre in meses %}
-                        <option value="{{ numero }}" {% if numero == mes_seleccionado %}selected{% endif %}>{{ nombre }}</option>
-                    {% endfor %}
-                </select>
+<div class="main-content">
+    <div class="content-frame export-page">
+        <section class="reportes-hero export-hero">
+            <div class="hero-copy">
+                <h2>📤 Exportar Reportes</h2>
+                <p>Descarga tus reportes mensuales y anuales en Excel para compartir y respaldar la información financiera.</p>
+                <div class="hero-total">
+                    <span>Periodo seleccionado</span>
+                    <strong>Mes {{ mes_seleccionado }} / {{ año_seleccionado }}</strong>
+                </div>
             </div>
-
-            <div class="filtro-grupo">
-                <label for="año">Año:</label>
-                <select name="año" id="año" class="select-filtro">
-                    {% for y in años %}
-                        <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
+            <div class="hero-actions">
+                <div class="hero-filter">
+                    <label>Últimos periodos</label>
+                    <p class="export-hint">Tienes disponibles {{ meses|length }} meses y {{ años|length }} años para exportar.</p>
+                </div>
+                <div class="hero-buttons">
+                    <a href="{% url 'reportes' %}" class="report-btn ghost">Volver a reportes</a>
+                </div>
             </div>
+        </section>
 
-            <button type="submit" name="exportar" value="1" class="select-filtro">Exportar Mensual</button>
-        </form> 
-    </div>
+        <div class="export-grid">
+            <form method="get" action="{% url 'exportar_reportes_mes' %}" class="export-card">
+                <header>
+                    <p class="card-pill">Mensual</p>
+                    <h3>Exportar reportes del mes</h3>
+                    <p>Genera un archivo Excel con el detalle completo del mes seleccionado.</p>
+                </header>
+                <div class="export-fields">
+                    <label class="export-field">
+                        <span>Mes</span>
+                        <select name="mes" id="mes">
+                            {% for numero, nombre in meses %}
+                                <option value="{{ numero }}" {% if numero == mes_seleccionado %}selected{% endif %}>{{ nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="export-field">
+                        <span>Año</span>
+                        <select name="año" id="año">
+                            {% for y in años %}
+                                <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" name="exportar" value="1" class="report-btn accent">Descargar mensual</button>
+            </form>
 
-    <div class="exportar-box">
-        <form method="get" action="{% url 'exportar_reportes_anual' %}" class="form-exportar">
-            <h3>📅 Exportar Reportes Anuales a Excel</h3>
-            <div class="filtro-grupo">
-                <label for="año_anual">Año:</label>
-                <select name="año" id="año_anual" class="select-filtro">
-                    {% for y in años %}
-                        <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <button type="submit" name="exportar_anual" value="1" class="select-filtro">Exportar Anual</button>
-        </form>
+            <form method="get" action="{% url 'exportar_reportes_anual' %}" class="export-card">
+                <header>
+                    <p class="card-pill">Anual</p>
+                    <h3>Exportar resumen anual</h3>
+                    <p>Obtén un consolidado con todas las ventas del año elegido.</p>
+                </header>
+                <div class="export-fields">
+                    <label class="export-field">
+                        <span>Año</span>
+                        <select name="año" id="año_anual">
+                            {% for y in años %}
+                                <option value="{{ y }}" {% if y == año_seleccionado %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" name="exportar_anual" value="1" class="report-btn">Descargar anual</button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

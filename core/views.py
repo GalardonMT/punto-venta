@@ -1,25 +1,85 @@
-from django.shortcuts import render, redirect, get_object_or_404 
+import json
+import logging
+from datetime import datetime, timedelta
+from collections import defaultdict
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST, require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator
-from django.utils import timezone
-from datetime import timedelta, datetime
-from django.contrib.auth.models import Group, User
-from django.db.models import Sum
-from django.utils.timezone import make_aware, localtime
-from django.http import JsonResponse, HttpResponse
-from openpyxl import Workbook
-from .models import Producto, Comanda, DetalleComanda, HistorialComanda, EliminacionComanda, Categoria
-from .forms import ProductoForm
-from openpyxl.styles import Font
-from collections import defaultdict
-import json
-import win32print
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group, User
+from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render 
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_http_methods
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
+from .forms import ProductoForm
+from .models import (Categoria, Comanda, DetalleComanda, EliminacionComanda,
+                    HistorialComanda, Producto)
+from core.utils.payments import PaymentError, calculate_payment_breakdown
+from core.utils.printers import PrinterError, send_raw_to_printer
+
+
+logger = logging.getLogger(__name__)
+
+OWNER_GROUP_NAME = 'Dueños'
+VALID_ESTADOS_COMANDA = {'abierta', 'cerrada'}
+VALID_TIPOS_SERVICIO = {'servir', 'delivery', 'reserva'}
+
+
+def _user_is_owner(user) -> bool:
+    return user.is_superuser or user.groups.filter(name=OWNER_GROUP_NAME).exists()
+
+
+def _sanitize_estado(value: str | None) -> str:
+    estado = (value or 'abierta').lower()
+    return estado if estado in VALID_ESTADOS_COMANDA else 'abierta'
+
+
+def _sanitize_tipo_servicio(value: str | None) -> str:
+    tipo = (value or 'servir').lower()
+    return tipo if tipo in VALID_TIPOS_SERVICIO else 'servir'
+
+
+def _build_detalle_payload(productos_payload):
+    if not productos_payload:
+        raise ValueError('Debe agregar al menos un producto a la comanda')
+
+    try:
+        producto_ids = {int(item['productoId']) for item in productos_payload}
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError('Formato de productos inválido') from exc
+
+    productos_map = Producto.objects.in_bulk(producto_ids)
+    detalles = []
+    total = 0
+
+    for item in productos_payload:
+        producto_id = int(item['productoId'])
+        producto = productos_map.get(producto_id)
+        if producto is None:
+            raise ValueError(f'Producto con ID {producto_id} no existe')
+
+        try:
+            cantidad = max(int(item.get('cantidad', 1)), 1)
+        except (TypeError, ValueError) as exc:
+            raise ValueError('La cantidad debe ser un entero positivo') from exc
+
+        subtotal = cantidad * producto.precio
+        total += subtotal
+        detalles.append({
+            'producto': producto,
+            'cantidad': cantidad,
+            'subtotal': subtotal,
+        })
+
+    return detalles, total
 
 # Autenticación
 def login_vista(request):
@@ -102,7 +162,7 @@ def inicio(request):
 #Usuarios
 @login_required(login_url='login')
 def usuarios(request):
-    if not request.user.groups.filter(name='Dueños').exists():
+    if not _user_is_owner(request.user):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
     usuarios = User.objects.all().order_by('date_joined')
@@ -113,110 +173,122 @@ def usuarios(request):
     })
 
 
+@login_required(login_url='login')
 def comandas_por_usuario(request, user_id):
-    if request.method == 'GET':
-        try:
-            # Obtener usuario
-            usuario = User.objects.get(pk=user_id)
-            
-            # Obtener todas las comandas del usuario
-            comandas = Comanda.objects.filter(empleado_id=user_id).order_by('-fecha')
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-            # Obtener solo las comandas de hoy
-            hoy = timezone.now().date()
-            comandas_hoy = comandas.filter(fecha__date=hoy)
-            total_vendido_hoy = sum(c.total for c in comandas_hoy)
-            cantidad_hoy = comandas_hoy.count()
+    try:
+        usuario = User.objects.get(pk=user_id)
+        comandas = Comanda.objects.filter(empleado_id=user_id).order_by('-fecha')
+        hoy = timezone.now().date()
+        comandas_hoy = comandas.filter(fecha__date=hoy)
+        total_vendido_hoy = sum(c.total for c in comandas_hoy)
+        cantidad_hoy = comandas_hoy.count()
 
-            # Formatear datos de todas las comandas
-            data = [{
-                'id': c.id,
-                'nombre_cliente': c.nombre_cliente,
-                'fecha': c.fecha.strftime('%d/%m/%Y %H:%M'),
-                'estado': c.estado,
-                'total': c.total
-            } for c in comandas_hoy]  # solo comandas de hoy si quieres mostrar eso en el modal
+        data = [{
+            'id': c.id,
+            'nombre_cliente': c.nombre_cliente,
+            'fecha': c.fecha.strftime('%d/%m/%Y %H:%M'),
+            'estado': c.estado,
+            'total': c.total
+        } for c in comandas_hoy]
 
-            return JsonResponse({
-                'comandas': data,
-                'cantidad_hoy': cantidad_hoy,
-                'total_vendido_hoy': total_vendido_hoy,
-                'last_login': usuario.last_login.strftime('%d/%m/%Y %H:%M') if usuario.last_login else 'Nunca',
-                'is_active': usuario.is_active
-            })
-
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
-        
+        return JsonResponse({
+            'comandas': data,
+            'cantidad_hoy': cantidad_hoy,
+            'total_vendido_hoy': total_vendido_hoy,
+            'last_login': usuario.last_login.strftime('%d/%m/%Y %H:%M') if usuario.last_login else 'Nunca',
+            'is_active': usuario.is_active
+        })
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
 @csrf_exempt
+@login_required(login_url='login')
 def cambiar_estado_usuario(request, user_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            activar = data.get('activar')
+    if not _user_is_owner(request.user):
+        return JsonResponse({'error': 'No autorizado'}, status=403)
 
-            if activar is None:
-                return JsonResponse({'error': 'Falta el parámetro "activar"'}, status=400)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-            user = User.objects.get(pk=user_id)
-            user.is_active = bool(activar)
-            user.save()
-            return JsonResponse({'success': True})
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    activar = data.get('activar')
+    if activar is None:
+        return JsonResponse({'error': 'Falta el parámetro "activar"'}, status=400)
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+    user.is_active = bool(activar)
+    user.save(update_fields=['is_active'])
+    return JsonResponse({'success': True})
 
 
 @csrf_exempt
+@login_required(login_url='login')
 def editar_usuario(request, user_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            username = data.get('username')
-            password = data.get('password')
-            grupo_nombre = data.get('grupo')
+    if not _user_is_owner(request.user):
+        return JsonResponse({'success': False, 'error': 'No autorizado'}, status=403)
 
-            if not username or not password or not grupo_nombre:
-                return JsonResponse({'success': False, 'error': 'Faltan datos obligatorios'})
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-            user = User.objects.get(pk=user_id)
-            user.username = username
-            user.password = make_password(password)
-            user.save()
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON inválido'}, status=400)
 
-            # Actualizar grupo
-            grupo = Group.objects.filter(name=grupo_nombre).first()
-            if grupo:
-                user.groups.clear()
-                user.groups.add(grupo)
-            else:
-                return JsonResponse({'success': False, 'error': f'Grupo "{grupo_nombre}" no encontrado'})
+    username = (data.get('username') or '').strip()
+    password = data.get('password')
+    grupo_nombre = data.get('grupo')
 
-            return JsonResponse({'success': True})
+    if not username or not password or not grupo_nombre:
+        return JsonResponse({'success': False, 'error': 'Faltan datos obligatorios'})
 
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
 
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    user.username = username
+    user.password = make_password(password)
+    user.save()
+
+    grupo = Group.objects.filter(name=grupo_nombre).first()
+    if not grupo:
+        return JsonResponse({'success': False, 'error': f'Grupo "{grupo_nombre}" no encontrado'})
+
+    user.groups.clear()
+    user.groups.add(grupo)
+    return JsonResponse({'success': True})
 
 
 @csrf_exempt
+@login_required(login_url='login')
 def eliminar_usuario(request, user_id):
-    if request.method == 'POST':
-        try:
-            user = User.objects.get(pk=user_id)
-            user.delete()
-            return JsonResponse({'success': True})
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+    if not _user_is_owner(request.user):
+        return JsonResponse({'error': 'No autorizado'}, status=403)
 
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+    if user == request.user:
+        return JsonResponse({'error': 'No puedes eliminar tu propio usuario'}, status=400)
+
+    user.delete()
+    return JsonResponse({'success': True})
 
 
 
@@ -269,7 +341,12 @@ def reportes(request):
 @require_POST
 @login_required(login_url='login')
 def nueva_comanda(request):
-    comanda = Comanda.objects.create(fecha=timezone.now(), estado='abierta', total=0)
+    comanda = Comanda.objects.create(
+        fecha=timezone.now(),
+        estado='abierta',
+        total=0,
+        empleado=request.user,
+    )
     return redirect('venta')
 
 
@@ -336,7 +413,10 @@ def agregar_a_comanda(request, comanda_id):
     return redirect('venta')
 
 
+@login_required(login_url='login')
 def api_usuario_detalle(request, user_id):
+    if not _user_is_owner(request.user):
+        return JsonResponse({'error': 'No autorizado'}, status=403)
     try:
         usuario = User.objects.get(id=user_id)
         data = {
@@ -381,6 +461,9 @@ def productos(request):
 @login_required
 def crear_categoria(request):
     if request.method == 'POST':
+        if not _user_is_owner(request.user):
+            messages.error(request, "No tienes permisos para crear categorías.")
+            return redirect('inicio')
         nombre = request.POST.get('nombre_categoria')
         if nombre:
             Categoria.objects.get_or_create(nombre=nombre)
@@ -390,6 +473,9 @@ def crear_categoria(request):
 @login_required
 def eliminar_categoria(request, categoria_id):
     if request.method == 'POST':
+        if not _user_is_owner(request.user):
+            messages.error(request, "No tienes permisos para eliminar categorías.")
+            return redirect('inicio')
         categoria = get_object_or_404(Categoria, id=categoria_id)
         categoria.delete()
     return redirect('productos')
@@ -431,114 +517,73 @@ def editar_producto(request, producto_id):
 @csrf_exempt
 @login_required(login_url='login')
 def guardar_comanda(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            print('DATA:', data)
-            cliente_nombre = data.get('cliente')
-            productos = data.get('productos')
-            print('PRODUCTOS:', productos)
-            estado = data.get('estado')
-            metodo_pago = data.get('metodo_pago') or ''
-            tipo_servicio = data.get('tipo_servicio') or ''
-            monto_efectivo = data.get('monto_efectivo') or 0
-            monto_tarjeta_debito = data.get('monto_tarjeta_debito') or 0
-            monto_tarjeta_credito = data.get('monto_tarjeta_credito') or 0
-            monto_transferencia = data.get('monto_transferencia') or 0
-            print('EFECTIVO:', monto_efectivo, 'DEBITO:', monto_tarjeta_debito, 'CREDITO:', monto_tarjeta_credito, 'TRANSFERENCIA:', monto_transferencia)
-            if not cliente_nombre or not productos or not estado:
-                print('ERROR: Datos incompletos')
-                return JsonResponse({'status': 'error', 'message': 'Datos incompletos'}, status=400)
-            total = sum(int(item['subtotal']) for item in productos)
-            print('TOTAL:', total)
-            efectivo = 0
-            tarjetaD = 0
-            tarjetaC = 0
-            transferencia = 0
-            if metodo_pago == 'efectivo':
-                efectivo = total
-            elif metodo_pago == 'tarjeta_debito':
-                tarjetaD = total
-            elif metodo_pago == 'tarjeta_credito':
-                tarjetaC = total
-            elif metodo_pago == 'transferencia':
-                transferencia = total
-            elif metodo_pago == 'mixto':
-                efectivo = int(monto_efectivo) if monto_efectivo else 0
-                tarjetaD = int(monto_tarjeta_debito) if monto_tarjeta_debito else 0
-                tarjetaC = int(monto_tarjeta_credito) if monto_tarjeta_credito else 0
-                transferencia = int(monto_transferencia) if monto_transferencia else 0
-                suma = efectivo + tarjetaD + tarjetaC + transferencia
-                print('SUMA:', suma)
-                if suma != total:
-                    print('ERROR: La suma de los montos no coincide con el total')
-                    return JsonResponse({'status': 'error', 'message': 'La suma de los montos no coincide con el total'}, status=400)
-            nota = data.get('nota_comanda')
-            print('NOTA:', nota)
-            comanda = Comanda.objects.create(
-                nombre_cliente=cliente_nombre,
-                estado=estado,
-                total=total,
-                empleado=request.user,
-                metodo_pago=metodo_pago,
-                tipo_servicio=tipo_servicio,
-                monto_efectivo=efectivo,
-                monto_tarjeta_credito=tarjetaC,
-                monto_tarjeta_debito=tarjetaD,
-                monto_transferencia=transferencia,
-                nota=nota
-            )
-            print('COMANDA:', comanda)
-            for item in productos:
-                print('ITEM:', item)
-                producto = Producto.objects.get(pk=item['productoId'])
-                DetalleComanda.objects.create(
-                    comanda=comanda,
-                    producto=producto,
-                    cantidad=item['cantidad'],
-                    subtotal=item['subtotal']
-                )
-            if comanda.estado == 'cerrada':
-                print('IMPRIMIENDO BOLETA Y COMANDA COCINA')
-                
-                # Imprimir boleta thermal de manera independiente
-                try:
-                    imprimir_boleta_thermal(comanda)
-                    print('✅ BOLETA THERMAL COMPLETADA')
-                except Exception as thermal_error:
-                    print(f'❌ ERROR EN BOLETA THERMAL: {str(thermal_error)}')
-                    # Continúa sin interrumpir
-                
-                # Imprimir comanda de cocina de manera independiente
-                try:
-                    imprimir_comanda_cocina(comanda)
-                    print('✅ COMANDA COCINA COMPLETADA')
-                except Exception as cocina_error:
-                    print(f'❌ ERROR EN COMANDA COCINA: {str(cocina_error)}')
-                    # Continúa sin interrumpir
-            
-            print('OK - Comanda guardada exitosamente')
-            return JsonResponse({'status': 'ok', 'comanda_id': comanda.id})
-        except Exception as e:
-            print('ERROR EXCEPTION:', str(e))
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
-    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
+
+    try:
+        detalles_payload, total = _build_detalle_payload(data.get('productos') or [])
+    except ValueError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
+
+    estado = _sanitize_estado(data.get('estado'))
+    cliente_nombre = (data.get('cliente') or '').strip() or 'No asignado'
+    tipo_servicio = _sanitize_tipo_servicio(data.get('tipo_servicio'))
+    nota = data.get('nota_comanda')
+
+    montos = {
+        'monto_efectivo': data.get('monto_efectivo'),
+        'monto_tarjeta_debito': data.get('monto_tarjeta_debito'),
+        'monto_tarjeta_credito': data.get('monto_tarjeta_credito'),
+        'monto_transferencia': data.get('monto_transferencia'),
+    }
+
+    try:
+        metodo_pago, payment_breakdown = calculate_payment_breakdown(
+            data.get('metodo_pago'),
+            total,
+            montos,
+        )
+    except PaymentError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
+
+    comanda = Comanda.objects.create(
+        nombre_cliente=cliente_nombre,
+        estado=estado,
+        total=total,
+        empleado=request.user,
+        metodo_pago=metodo_pago,
+        tipo_servicio=tipo_servicio,
+        nota=nota,
+        **payment_breakdown,
+    )
+
+    DetalleComanda.objects.bulk_create([
+        DetalleComanda(
+            comanda=comanda,
+            producto=detalle['producto'],
+            cantidad=detalle['cantidad'],
+            subtotal=detalle['subtotal'],
+        )
+        for detalle in detalles_payload
+    ])
+
+    return JsonResponse({'status': 'ok', 'comanda_id': comanda.id})
 
 
 @login_required(login_url='login')
 def comandas_json(request):
-    # Obtén los IDs de las comandas en el historial
-    ids_historial = set(HistorialComanda.objects.values_list('id', flat=True))
-    comandas = Comanda.objects.all().order_by('-id')  # más recientes primero
-    data = []
-    for c in comandas:
-        data.append({
-            'id': c.id,
-            'cliente': c.nombre_cliente or 'No asignado',
-            'estado': c.estado,
-            'es_historial': c.id in ids_historial  # <-- Indica si está en historial
-        })
+    comandas = Comanda.objects.all().order_by('-id')
+    data = [{
+        'id': c.id,
+        'cliente': c.nombre_cliente or 'No asignado',
+        'estado': c.estado,
+        'es_historial': False,
+    } for c in comandas]
     return JsonResponse({'comandas': data})
 
 
@@ -608,9 +653,6 @@ def eliminar_comanda(request, comanda_id):
 
         comanda = get_object_or_404(Comanda, id=comanda_id)
 
-        # Guardar en tabla de eliminaciones
-        from .models import EliminacionComanda  # asegúrate que esté importado arriba
-
         EliminacionComanda.objects.create(
             comanda_id=comanda.id,
             nombre_cliente=comanda.nombre_cliente,
@@ -631,164 +673,117 @@ def eliminar_comanda(request, comanda_id):
 def editar_comanda(request, id):
     try:
         data = json.loads(request.body)
-        cliente = data.get('cliente')
-        estado = data.get('estado')
-        metodo_pago = data.get('metodo_pago')
-        tipo_servicio = data.get('tipo_servicio')
-        monto_efectivo = data.get('monto_efectivo') or 0
-        monto_tarjeta_debito = data.get('monto_tarjeta_debito') or 0
-        monto_tarjeta_credito = data.get('monto_tarjeta_credito') or 0
-        monto_transferencia = data.get('monto_transferencia') or 0
-        productos = data.get('productos', [])
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
 
-        comanda = Comanda.objects.get(pk=id)
+    comanda = get_object_or_404(Comanda, pk=id)
 
-        # Eliminar detalles anteriores
-        DetalleComanda.objects.filter(comanda=comanda).delete()
+    try:
+        detalles_payload, total = _build_detalle_payload(data.get('productos') or [])
+    except ValueError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
 
-        # Agregar los nuevos detalles y calcular total
-        total = 0
-        for item in productos:
-            producto = Producto.objects.get(pk=item['productoId'])
-            cantidad = int(item['cantidad'])
-            subtotal = int(item['subtotal'])
-            DetalleComanda.objects.create(
-                comanda=comanda,
-                producto=producto,
-                cantidad=cantidad,
-                subtotal=subtotal
-            )
-            total += subtotal
+    montos = {
+        'monto_efectivo': data.get('monto_efectivo'),
+        'monto_tarjeta_debito': data.get('monto_tarjeta_debito'),
+        'monto_tarjeta_credito': data.get('monto_tarjeta_credito'),
+        'monto_transferencia': data.get('monto_transferencia'),
+    }
 
-        # Actualizar info general
-        comanda.nombre_cliente = cliente
-        comanda.estado = estado
-        comanda.metodo_pago = metodo_pago
-        comanda.tipo_servicio = tipo_servicio
-        comanda.total = total
+    try:
+        metodo_pago, payment_breakdown = calculate_payment_breakdown(
+            data.get('metodo_pago'),
+            total,
+            montos,
+        )
+    except PaymentError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
 
-        # Asignar montos segun metodo
-        if metodo_pago == 'efectivo':
-            comanda.monto_efectivo = total
-            comanda.monto_tarjeta_debito = 0
-            comanda.monto_tarjeta_credito = 0
-            comanda.monto_transferencia = 0
-        elif metodo_pago == 'tarjeta_credito':
-            comanda.monto_efectivo = 0
-            comanda.monto_tarjeta_debito = 0
-            comanda.monto_tarjeta_credito = total
-            comanda.monto_transferencia = 0
-        elif metodo_pago == 'tarjeta_debito':
-            comanda.monto_efectivo = 0
-            comanda.monto_tarjeta_debito = total
-            comanda.monto_tarjeta_credito = 0
-            comanda.monto_transferencia = 0
-        elif metodo_pago == 'transferencia':
-            comanda.monto_transferencia = total
-            comanda.monto_efectivo = 0
-            comanda.monto_tarjeta_debito = 0
-            comanda.monto_tarjeta_credito = 0
-        elif metodo_pago == 'mixto':
-            efectivo = int(monto_efectivo) if monto_efectivo else 0
-            tarjetaD = int(monto_tarjeta_debito) if monto_tarjeta_debito else 0
-            tarjetaC = int(monto_tarjeta_credito) if monto_tarjeta_credito else 0
-            transferencia = int(monto_transferencia) if monto_transferencia else 0
+    comanda.nombre_cliente = (data.get('cliente') or '').strip() or 'No asignado'
+    comanda.estado = _sanitize_estado(data.get('estado'))
+    comanda.metodo_pago = metodo_pago
+    comanda.tipo_servicio = _sanitize_tipo_servicio(data.get('tipo_servicio'))
+    comanda.total = total
+    comanda.nota = data.get('nota_comanda')
+    for field, value in payment_breakdown.items():
+        setattr(comanda, field, value)
+    comanda.save()
 
-            if efectivo + tarjetaD + tarjetaC + transferencia != total:
-                return JsonResponse({'status': 'error', 'message': 'La suma de los montos no coincide con el total'}, status=400)
+    DetalleComanda.objects.filter(comanda=comanda).delete()
+    DetalleComanda.objects.bulk_create([
+        DetalleComanda(
+            comanda=comanda,
+            producto=detalle['producto'],
+            cantidad=detalle['cantidad'],
+            subtotal=detalle['subtotal'],
+        )
+        for detalle in detalles_payload
+    ])
 
-            comanda.monto_efectivo = efectivo
-            comanda.monto_tarjeta_debito = tarjetaD
-            comanda.monto_tarjeta_credito = tarjetaC
-            comanda.monto_transferencia = transferencia
-        else:
-            comanda.monto_efectivo = None
-            comanda.monto_tarjeta_debito = None
-            comanda.monto_tarjeta_credito = None
-            comanda.monto_transferencia = None
-
-        comanda.nota = data.get('nota_comanda')
-        comanda.save()
-
-        if comanda.estado == 'cerrada':
-            # Imprimir boleta thermal de manera independiente
-            try:
-                imprimir_boleta_thermal(comanda)
-                print(f"✅ Boleta thermal impresa exitosamente para comanda {comanda.id}")
-            except Exception as thermal_error:
-                print(f"❌ Error en boleta thermal para comanda {comanda.id}: {thermal_error}")
-            
-            # Imprimir comanda de cocina de manera independiente
-            try:
-                imprimir_comanda_cocina(comanda)
-                print(f"✅ Comanda de cocina impresa exitosamente para comanda {comanda.id}")
-            except Exception as cocina_error:
-                print(f"❌ Error en comanda de cocina para comanda {comanda.id}: {cocina_error}")
-
-        return JsonResponse({'status': 'ok'})
-
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'ok'})
 
     
 @csrf_exempt
 @login_required(login_url='login')
 def cerrar_caja(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            admin_username = data.get('admin_username')
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
-            # Verificamos que exista el usuario
-            admin_user = User.objects.get(username=admin_username)
+    if not _user_is_owner(request.user):
+        return JsonResponse({'status': 'error', 'message': 'No autorizado'}, status=403)
 
-            # ⚠️ Verificar si existen comandas abiertas
-            comandas_abiertas = Comanda.objects.filter(estado='abierta')
-            if comandas_abiertas.exists():
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'No se puede cerrar la caja: hay comandas abiertas. Debe cerrarlas o eliminarlas primero.'
-                }, status=400)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
 
-            # Obtener todas las comandas cerradas
-            comandas_cerradas = Comanda.objects.filter(estado='cerrada')
+    admin_username = data.get('admin_username') or request.user.username
+    try:
+        admin_user = User.objects.get(username=admin_username)
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Administrador no encontrado'}, status=404)
 
-            for comanda in comandas_cerradas:
-                detalles = DetalleComanda.objects.filter(comanda=comanda)
-                lista_productos = []
+    if Comanda.objects.filter(estado='abierta').exists():
+        return JsonResponse({
+            'status': 'error',
+            'message': 'No se puede cerrar la caja: hay comandas abiertas. Debe cerrarlas o eliminarlas primero.',
+        }, status=400)
 
-                for detalle in detalles:
-                    lista_productos.append({
-                        'producto': detalle.producto.nombre,
-                        'cantidad': detalle.cantidad,
-                        'subtotal': detalle.subtotal
-                    })
+    comandas_cerradas = list(Comanda.objects.filter(estado='cerrada').select_related('empleado'))
+    if not comandas_cerradas:
+        return JsonResponse({'status': 'error', 'message': 'No hay comandas cerradas para procesar'}, status=400)
 
-                # Guardar en historial
-                HistorialComanda.objects.create(
-                    fecha=comanda.fecha,
-                    nombre_cliente=comanda.nombre_cliente,
-                    empleado=comanda.empleado,
-                    total=comanda.total,
-                    metodo_pago=comanda.metodo_pago,
-                    monto_efectivo=comanda.monto_efectivo,
-                    monto_tarjeta_debito=comanda.monto_tarjeta_debito,
-                    monto_tarjeta_credito=comanda.monto_tarjeta_credito,
-                    monto_transferencia=comanda.monto_transferencia,
-                    tipo_servicio=comanda.tipo_servicio,
-                    detalles=json.dumps(lista_productos),
-                    cerrado_por=admin_user  
-                )
+    historial_entries = []
+    for comanda in comandas_cerradas:
+        detalles = DetalleComanda.objects.filter(comanda=comanda)
+        lista_productos = [
+            {
+                'producto': detalle.producto.nombre,
+                'cantidad': detalle.cantidad,
+                'subtotal': detalle.subtotal,
+            }
+            for detalle in detalles
+        ]
 
-            # Eliminar todas las comandas
-            Comanda.objects.all().delete()
+        historial_entries.append(HistorialComanda(
+            fecha=comanda.fecha,
+            nombre_cliente=comanda.nombre_cliente,
+            empleado=comanda.empleado,
+            total=comanda.total,
+            metodo_pago=comanda.metodo_pago,
+            monto_efectivo=comanda.monto_efectivo,
+            monto_tarjeta_debito=comanda.monto_tarjeta_debito,
+            monto_tarjeta_credito=comanda.monto_tarjeta_credito,
+            monto_transferencia=comanda.monto_transferencia,
+            tipo_servicio=comanda.tipo_servicio,
+            detalles=json.dumps(lista_productos),
+            cerrado_por=admin_user,
+        ))
 
-            return JsonResponse({'status': 'ok'})
-        
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    HistorialComanda.objects.bulk_create(historial_entries)
+    Comanda.objects.all().delete()
 
-    return JsonResponse({'status': 'error', 'message': 'Método no permitido'})
+    return JsonResponse({'status': 'ok'})
 
 @csrf_exempt
 def verificar_y_eliminar_comanda(request):
@@ -994,7 +989,7 @@ def imprimir_boleta_thermal(comanda):
     fecha_hora = fecha_chile.strftime('%d/%m/%Y %H:%M')
 
     ticket = ""
-    ticket += "        Mata el hambre\n"
+    ticket += "        Punto de Venta\n"
     ticket += "-"*32 + "\n"
     ticket += f"N interno: {comanda.id}\n"
     ticket += f"N diario: {n_diario}\n"
@@ -1041,26 +1036,14 @@ def imprimir_boleta_thermal(comanda):
     ticket += f"{comanda.tipo_servicio}, {comanda.nombre_cliente}\n"
     ticket += "\n\n"
 
-    # Imprimir en la impresora de clientes
-    printer_name = "CAJA"
     try:
-        print(f"[THERMAL] Intentando imprimir en: {printer_name}")
-        hPrinter = win32print.OpenPrinter(printer_name)
-        try:
-            hJob = win32print.StartDocPrinter(hPrinter, 1, ("Boleta", None, "RAW"))
-            win32print.StartPagePrinter(hPrinter)
-            win32print.WritePrinter(hPrinter, ticket.encode('utf-8'))
-            win32print.EndPagePrinter(hPrinter)
-            win32print.EndDocPrinter(hPrinter)
-            print(f"[THERMAL] ✅ Boleta impresa exitosamente en {printer_name}")
-        finally:
-            win32print.ClosePrinter(hPrinter)
-    except Exception as e:
-        print(f"[THERMAL] ❌ Error al imprimir en {printer_name}: {str(e)}")
+        send_raw_to_printer("CAJA", f"Boleta #{comanda.id}", ticket)
+    except PrinterError:
+        logger.exception("Error al imprimir boleta thermal de la comanda %s", comanda.id)
         raise
 
 def comandas_eliminadas(request):
-    if not request.user.groups.filter(name='Dueños').exists():
+    if not _user_is_owner(request.user):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
 
@@ -1070,7 +1053,10 @@ def comandas_eliminadas(request):
     page_obj = paginator.get_page(page_number)
     return render(request, 'core/comandas_eliminadas.html', {'comandas': page_obj})
 
+@login_required(login_url='login')
 def comandas_eliminadas_json(request):
+    if not _user_is_owner(request.user):
+        return JsonResponse({'error': 'No autorizado'}, status=403)
     data = []
     for e in EliminacionComanda.objects.select_related('eliminado_por'):
         data.append({
@@ -1085,7 +1071,7 @@ def comandas_eliminadas_json(request):
 
 
 @require_POST
-@login_required
+@login_required(login_url='login')
 def reabrir_comanda(request, comanda_id):
     comanda = get_object_or_404(Comanda, id=comanda_id, estado='cerrada')
     comanda.estado = 'abierta'
@@ -1123,32 +1109,17 @@ def imprimir_comanda_cocina(comanda):
     ticket += f"{comanda.tipo_servicio}, {comanda.nombre_cliente}\n"
     ticket += "\n\n"
 
-    # Imprimir en la impresora de cocina
-    printer_name = "COCINA"
     try:
-        print(f"[COCINA] Intentando imprimir en: {printer_name}")
-        hPrinter = win32print.OpenPrinter(printer_name)
-        try:
-            hJob = win32print.StartDocPrinter(hPrinter, 1, ("Comanda Cocina", None, "RAW"))
-            win32print.StartPagePrinter(hPrinter)
-            win32print.WritePrinter(hPrinter, ticket.encode('utf-8'))
-            win32print.EndPagePrinter(hPrinter)
-            win32print.EndDocPrinter(hPrinter)
-            print(f"[COCINA] ✅ Comanda impresa exitosamente en {printer_name}")
-        finally:
-            win32print.ClosePrinter(hPrinter)
-    except Exception as e:
-        print(f"[COCINA] ❌ Error al imprimir en {printer_name}: {str(e)}")
+        send_raw_to_printer("COCINA", f"Comanda #{comanda.id}", ticket)
+    except PrinterError:
+        logger.exception("Error al imprimir la comanda de cocina %s", comanda.id)
         raise        
 
-@require_POST
-@login_required
-def imprimir_boleta_ventas_dia(request):
-    from django.utils import timezone
-    import win32print
 
+@require_POST
+@login_required(login_url='login')
+def imprimir_boleta_ventas_dia(request):
     hoy = timezone.localdate()
-    numero_turno = 1  # Cambia esto según tu lógica de turnos
 
     ventas = HistorialComanda.objects.filter(fecha__date=hoy)
     total_venta = 0
@@ -1196,28 +1167,15 @@ def imprimir_boleta_ventas_dia(request):
     ticket += f"{fecha_hora:^{32}}\n"
     ticket += "\n\n"
 
-    # Imprimir en una impresora específica
-    printer_name = "CAJA"  # Cambia por el nombre de la impresora que quieras usar
     try:
-        print(f"[CAJA] Intentando imprimir en: {printer_name}")
-        hPrinter = win32print.OpenPrinter(printer_name)
-        try:
-            hJob = win32print.StartDocPrinter(hPrinter, 1, ("Ventas del Día", None, "RAW"))
-            win32print.StartPagePrinter(hPrinter)
-            win32print.WritePrinter(hPrinter, ticket.encode('utf-8'))
-            win32print.EndPagePrinter(hPrinter)
-            win32print.EndDocPrinter(hPrinter)
-            print(f"[CAJA] ✅ Reporte de ventas impreso exitosamente en {printer_name}")
-        finally:
-            win32print.ClosePrinter(hPrinter)
-    except Exception as e:
-        print(f"[CAJA] ❌ Error al imprimir en {printer_name}: {str(e)}")
-        # No hacer raise aquí para que no interrumpa la respuesta HTTP
-
-    return HttpResponse("Boleta de ventas del día enviada a la impresora.")
+        send_raw_to_printer("CAJA", "Ventas del Día", ticket)
+        return HttpResponse("Boleta de ventas del día enviada a la impresora.")
+    except PrinterError:
+        logger.exception("Error al imprimir el resumen de ventas del día")
+        return HttpResponse("No se pudo enviar el resumen a la impresora.", status=500)
 
 @csrf_exempt
-@login_required
+@login_required(login_url='login')
 def imprimir_boleta_comanda(request, comanda_id):
     if request.method == 'POST':
         try:
@@ -1229,7 +1187,7 @@ def imprimir_boleta_comanda(request, comanda_id):
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'})
 
 @csrf_exempt
-@login_required
+@login_required(login_url='login')
 def imprimir_boleta_cocina_view(request, comanda_id):
     if request.method == 'POST':
         try:

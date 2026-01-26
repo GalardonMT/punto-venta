@@ -3,7 +3,7 @@
 
 {% block head %}
     <head>
-        <title>Mata el Hambre - CRUD</title>
+        <title>Punto de Venta - Productos</title>
         <link rel="stylesheet" href="{% static 'core/css/productos.css' %}">
     </head>
 {% endblock %}
@@ -83,44 +83,46 @@
 
             </div>
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Imagen</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Categoría</th>
-                        <th>Precio</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for producto in productos %}
-                    <tr id="row-{{ producto.id }}">
-                        <td>{{ producto.id }}</td>
-                        <td id="imagen-{{ producto.id }}">
-                            {% if producto.imagen %}
-                                <img src="{{ producto.imagen.url }}" alt="Imagen" class="img-producto">
-                            {% else %}
-                                <img src="{% static 'core/img/default.jpg' %}" alt="Sin imagen" class="img-producto">
-                            {% endif %}
-                        </td>
-                        <td><span id="nombre-{{ producto.id }}">{{ producto.nombre }}</span></td>
-                        <td><span id="descripcion-{{ producto.id }}">{{ producto.descripcion }}</span></td>
-                        <td><span id="categoria-{{ producto.id }}" data-valor="{% if producto.categoria %}{{ producto.categoria.id }}{% else %}{% endif %}">{% if producto.categoria %}{{ producto.categoria.nombre }}{% else %}Sin categoría{% endif %}</span></td>
-                        <td><span id="precio-{{ producto.id }}">{{ producto.precio }}</span></td>
-                        <td id="acciones-{{ producto.id }}">
-                            <button type="button" onclick="activarEdicion('{{ producto.id }}')">Editar</button>
-                            <form method="POST" action="{% url 'eliminar_producto' producto.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button onclick="return confirm('¿Eliminar este producto?')" style="background-color:red;">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="tabla-responsive tabla-productos">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr id="row-{{ producto.id }}">
+                            <td>{{ producto.id }}</td>
+                            <td id="imagen-{{ producto.id }}">
+                                {% if producto.imagen %}
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen" class="img-producto">
+                                {% else %}
+                                    <img src="{% static 'core/img/default.jpg' %}" alt="Sin imagen" class="img-producto">
+                                {% endif %}
+                            </td>
+                            <td><span id="nombre-{{ producto.id }}">{{ producto.nombre }}</span></td>
+                            <td><span id="descripcion-{{ producto.id }}">{{ producto.descripcion }}</span></td>
+                            <td><span id="categoria-{{ producto.id }}" data-valor="{% if producto.categoria %}{{ producto.categoria.id }}{% else %}{% endif %}">{% if producto.categoria %}{{ producto.categoria.nombre }}{% else %}Sin categoría{% endif %}</span></td>
+                            <td><span id="precio-{{ producto.id }}">{{ producto.precio }}</span></td>
+                            <td id="acciones-{{ producto.id }}">
+                                <button type="button" onclick="activarEdicion('{{ producto.id }}')">Editar</button>
+                                <form method="POST" action="{% url 'eliminar_producto' producto.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button onclick="return confirm('¿Eliminar este producto?')" style="background-color:red;">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
         </div>
     </div>

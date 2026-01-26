@@ -3,7 +3,7 @@
 
 {% block head %}
     <head>
-        <title>Mata el Hambre - CRUD</title>
+        <title>Punto de Venta - Panel</title>
         <link rel="stylesheet" href="{% static 'core/css/venta.css' %}">
     </head>
 {% endblock %}
@@ -11,14 +11,17 @@
 {% block content %}
     <div class="main-content">
         <div class="content-frame">
-            <div class="content-header">
-                <h2>📄 Gestión de Comandas</h2>    
+            <div class="content-header gestion-header">
+                <div class="header-title">
+                    <h2>📄 Gestión de Comandas</h2>
+                </div>
+                <div class="gestion-actions">
+                    <button type="button" class="boton-agregar" onclick="abrirModal()">Nueva Comanda</button>
+                    <a href="{% url 'comandas_eliminadas' %}" class="boton-agregar">Comandas Eliminadas</a>
+                    <a href="{% url 'reportes' %}" class="boton-agregar">Reportes</a>
+                    <button type="button" class="boton-cerrar-caja" onclick="mostrarModalCerrarCaja()">Cerrar Caja</button>
+                </div>
             </div>
-
-            <button class="boton-agregar" onclick="abrirModal()">Nueva Comanda</button>
-            <a href="{% url 'comandas_eliminadas' %}"><button class="boton-agregar">Comandas Eliminadas</button></a>
-            <a href="{% url 'reportes' %}"><button class="boton-agregar">Reportes</button></a>
-            <button class="boton-cerrar-caja" onclick="mostrarModalCerrarCaja()">Cerrar Caja</button>
 
             <!-- Modal para verificación de superusuario al cerrar caja -->
             <div id="modalCerrarCaja" class="modal">

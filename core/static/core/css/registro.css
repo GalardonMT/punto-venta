@@ -4,6 +4,12 @@
     box-sizing: border-box;
     font-family: 'Arial', sans-serif;
 }
+
+:root {
+    --brand-celeste: #2fb0d9;
+    --brand-celeste-dark: #1f8fb6;
+    --brand-celeste-light: #a6e6f8;
+}
         
 body {
     display: flex;
@@ -22,10 +28,10 @@ body {
 }
         
 .login-header {
-    background-color: #e6b800;
+    background-color: var(--brand-celeste);
     padding: 30px;
     text-align: center;
-    color: #333;
+    color: #fff;
 }
         
 .login-header h1 {
@@ -34,24 +40,20 @@ body {
     text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
         
-.logo-container {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background-color: white;
+.logo-placeholder {
     display: flex;
-    justify-content: center;
     align-items: center;
-    border: 3px solid white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    overflow: hidden;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin: 0 auto 10px auto;
 }
-        
-.logo-container img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+
+.logo-placeholder h1 {
+    font-size: 1.4rem;
+    color: white;
+    margin: 0;
 }
         
 .login-body {
@@ -79,9 +81,9 @@ body {
 }
         
 .form-group input:focus {
-    border-color: #e6b800;
+    border-color: var(--brand-celeste);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(230, 184, 0, 0.2);
+    box-shadow: 0 0 0 2px rgba(47, 176, 217, 0.25);
 }
         
 /* Botones */
@@ -92,7 +94,7 @@ body {
 .register-button {
     width: 100%;
     padding: 12px;
-    background-color: #cc9900;
+    background-color: var(--brand-celeste);
     border: none;
     border-radius: 5px;
     color: white;
@@ -117,7 +119,7 @@ body {
 }
         
 .register-button:hover {
-    background-color: #b38600;
+    background-color: var(--brand-celeste-dark);
     transform: translateY(-2px);
 }
         

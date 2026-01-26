@@ -3,7 +3,7 @@
 
 {% block head %}
 <head>
-    <title>Mata el Hambre - CRUD</title>
+    <title>Punto de Venta - Usuarios</title>
     <link rel="stylesheet" href="{% static 'core/css/usuarios.css' %}">
 </head>
 {% endblock %}
@@ -16,7 +16,7 @@
             <p>Total de usuarios registrados: {{ total_usuarios }}</p>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive tabla-responsive">
             <table class="user-table">
                 <thead>
                     <tr>
@@ -24,7 +24,6 @@
                         <th>Nombre de usuario</th>
                         <th>Grupo</th>
                         <th>Fecha de registro</th>
-                        <th>Último login</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -43,7 +42,6 @@
                                 {% endif %}
                             {% endwith %}
                         </td>   
-                        <td>{{ usuario.date_joined|date:"d/m/Y H:i" }}</td>
                         <td>{{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
                         <td>
                             {% if usuario.is_active %}

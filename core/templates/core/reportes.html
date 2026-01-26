@@ -3,68 +3,99 @@
 
 {% block head %}
     <head>
-        <title>Mata el Hambre - CRUD</title>
+        <title>Punto de Venta - Reportes</title>
         <link rel="stylesheet" href="{% static 'core/css/reportes.css' %}">
     </head>
 {% endblock %}
 
 {% block content %}
+{% now "d/m/Y H:i" as timestamp_actual %}
 <div class="main-content">
-    <div class="content-frame">
-        <div class="content-header header-bar">
-            <h2>📊 Reportes de Ventas</h2>
-            <div class="select-container">
-                <form method="get" style="display:flex; align-items:center; gap:10px;">
-                    <label for="filtro" class="orden">Ver:</label>
-                    <select name="filtro" id="filtro" onchange="this.form.submit()" class="select-filtroR">
+    <div class="content-frame reportes-page">
+        <div class="reportes-hero">
+            <div class="hero-copy">
+                <h2>📊 Reportes de Ventas</h2>
+                <p>Visualiza el rendimiento {{ filtro }} y exporta la información clave para tu seguimiento.</p>
+                <div class="hero-total">
+                    <span>Total
+                        {% if filtro == 'diario' %}
+                            diario
+                        {% elif filtro == 'semanal' %}
+                            semanal
+                        {% elif filtro == 'mensual' %}
+                            mensual
+                        {% else %}
+                            general
+                        {% endif %}
+                    </span>
+                    <strong>${{ total_ventas|floatformat:0 }}</strong>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <form method="get" class="hero-filter">
+                    <label for="filtro">Ver periodo</label>
+                    <select name="filtro" id="filtro" onchange="this.form.submit()">
                         <option value="diario" {% if filtro == 'diario' %}selected{% endif %}>Diario</option>
                         <option value="semanal" {% if filtro == 'semanal' %}selected{% endif %}>Semanal</option>
                         <option value="mensual" {% if filtro == 'mensual' %}selected{% endif %}>Mensual</option>
                     </select>
                 </form>
-                <a href="{% url 'exportar_reportes_mes' %}" class="select-filtroR">Exportar Reportes del Mes a Excel</a>
-                <button type="button" class="select-filtroR" onclick="imprimirVentasDia()">Ventas finales del día</button>
+                <div class="hero-buttons">
+                    <a href="{% url 'exportar_reportes_mes' %}" class="report-btn ghost">Exportar mes a Excel</a>
+                    <button type="button" class="report-btn accent" onclick="imprimirVentasDia()">Ventas finales del día</button>
+                </div>
             </div>
         </div>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th>Empleado</th>
-                    <th>Método de Pago</th>
-                    <th>Efectivo</th>
-                    <th>Tarjeta Debito</th>
-                    <th>Tarjeta Credito</th>
-                    <th>Transferencia</th>
-                    <th>Servicio</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for comanda in historial %}
-                <tr>
-                    <td>{{ comanda.id }}</td>
-                    <td>{{ comanda.fecha|date:"d/m/Y H:i" }}</td>
-                    <td>{{ comanda.nombre_cliente }}</td>
-                    <td>{{ comanda.empleado.username }}</td>
-                    <td>{{ comanda.metodo_pago|default:"-" }}</td>
-                    <td>${{ comanda.monto_efectivo|default:"0" }}</td>
-                    <td>${{ comanda.monto_tarjeta_debito|default:"0" }}</td>
-                    <td>${{ comanda.monto_tarjeta_credito|default:"0" }}</td>
-                    <td>${{ comanda.monto_transferencia|default:"0" }}</td>
-                    <td>{{ comanda.tipo_servicio|default:"-" }}</td>
-                    <td>${{ comanda.total }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="9" style="text-align:center;">No hay registros disponibles para este período.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="tabla-wrapper">
+            <div class="tabla-header">
+                <div>
+                    <h3>Detalle de ventas</h3>
+                    <p>{{ historial|length }} registros en este periodo</p>
+                </div>
+                <span class="tabla-pill">Actualizado {{ timestamp_actual }}</span>
+            </div>
+            <div class="tabla-scroll tabla-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Empleado</th>
+                            <th>Método de Pago</th>
+                            <th>Efectivo</th>
+                            <th>Tarjeta Debito</th>
+                            <th>Tarjeta Credito</th>
+                            <th>Transferencia</th>
+                            <th>Servicio</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comanda in historial %}
+                        <tr>
+                            <td>{{ comanda.id }}</td>
+                            <td>{{ comanda.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>{{ comanda.nombre_cliente }}</td>
+                            <td>{{ comanda.empleado.username }}</td>
+                            <td>{{ comanda.metodo_pago|default:"-" }}</td>
+                            <td>${{ comanda.monto_efectivo|default:"0" }}</td>
+                            <td>${{ comanda.monto_tarjeta_debito|default:"0" }}</td>
+                            <td>${{ comanda.monto_tarjeta_credito|default:"0" }}</td>
+                            <td>${{ comanda.monto_transferencia|default:"0" }}</td>
+                            <td>{{ comanda.tipo_servicio|default:"-" }}</td>
+                            <td>${{ comanda.total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" style="text-align:center;">No hay registros disponibles para este período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <div class="barra-inferior">
             <div class="paginacion-inferior">
@@ -80,22 +111,13 @@
                             <a href="?page={{ historial.next_page_number }}&filtro={{ filtro }}">Siguiente &raquo;</a>
                         {% endif %}
                     </div>
+                {% else %}
+                    <span class="pagination-placeholder">Mostrando página única</span>
                 {% endif %}
             </div>
             <div class="total-general"> 
-                <strong>
-                    Total General 
-                    {% if filtro == 'diario' %}
-                        Diario:
-                    {% elif filtro == 'semanal' %}
-                        Semanal:
-                    {% elif filtro == 'mensual' %}
-                        Mensual:
-                    {% else %}
-                        :
-                    {% endif %}
-                </strong>
-                ${{ total_ventas|floatformat:0 }}
+                <strong>Balance actual:</strong>
+                <span>${{ total_ventas|floatformat:0 }}</span>
             </div>
         </div>
 

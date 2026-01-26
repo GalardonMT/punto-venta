@@ -7,6 +7,18 @@
     font-family: 'Arial', sans-serif;
 }
 
+:root {
+    --tabla-header-start: #d8f1ff;
+    --tabla-header-end: #76c4d9;
+    --tabla-header-text: #083a4a;
+    --tabla-border: #b6e0ec;
+    --tabla-row-alt: #f3fbff;
+    --tabla-row-hover: #e0f3fa;
+    --brand-celeste: #2fb0d9;
+    --brand-celeste-dark: #1f8fb6;
+    --brand-celeste-light: #a6e6f8;
+}
+
 /* Imagen de producto en la tabla */
 .img-producto {
     width: 60px;
@@ -22,8 +34,8 @@
     display: inline-block;
     margin-bottom: 20px;
     padding: 12px 24px;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--brand-celeste);
+    color: #fff;
     border: none;
     border-radius: 8px;
     font-size: 16px;
@@ -32,7 +44,7 @@
 }
 
 .boton-agregar:hover {
-    background-color: #218838;
+    background-color: var(--brand-celeste-dark);
 }
 
 /* ---------- MODAL ---------- */
@@ -51,17 +63,17 @@
 
 .modal-contenido {
     background-color: #fff;
-    margin: 3% auto;       /* un poco menos de margen arriba para que suba */
+    margin: 3% auto;
     padding: 30px 25px;
     border-radius: 12px;
-    width: 600px;          /* más ancho */
-    max-width: 95%;        /* para que no se salga en pantallas pequeñas */
-    max-height: 80vh;      /* máximo alto basado en viewport */
-    overflow: hidden;      /* para evitar que se salga */
+    width: min(600px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     position: relative;
     display: flex;
     flex-direction: column;
+    scrollbar-width: thin;
 }
 
 /* Ajustar el contenedor de la lista */
@@ -143,13 +155,13 @@
 .modal-contenido select:focus,
 .modal-contenido textarea:focus {
     outline: none;
-    border-color: #28a745;
+    border-color: var(--brand-celeste);
 }
 
 /* Botón de envío dentro del modal */
 .modal-contenido button[type="submit"] {
     margin-top: 20px;
-    background-color: #28a745;
+    background-color: var(--brand-celeste);
     border: none;
     color: white;
     padding: 10px 18px;
@@ -160,33 +172,37 @@
 }
 
 .modal-contenido button[type="submit"]:hover {
-    background-color: #218838;
+    background-color: var(--brand-celeste-dark);
 }
 
 /* ---------- TABLA PRODUCTOS ---------- */
 
-table td {
+.table td {
     vertical-align: middle;
     text-align: center;
+    font-size: 0.9rem;
 }
 
-table td button {
+
+.table button {
+    margin: 2px;
     padding: 6px 10px;
-    font-size: 14px;
     min-width: 80px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    background-color: var(--brand-celeste);
+    color: white;
+    transition: background-color 0.2s ease-in-out;
 }
 
-tr td {
-    transition: all 0.2s ease-in-out;
+.table button:hover {
+    background-color: var(--brand-celeste-dark);
 }
 
-table select {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-table input[type="text"],
-table input[type="number"] {
+.table input[type="text"],
+.table input[type="number"] {
     width: 90%;
     padding: 6px 8px;
     font-size: 15px;
@@ -195,31 +211,18 @@ table input[type="number"] {
     box-sizing: border-box;
 }
 
-table input[type="file"] {
+.table input[type="file"] {
     padding: 4px;
 }
 
-table form {
+.table form {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
 }
 
-table button {
-    margin: 2px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    transition: background-color 0.2s ease-in-out;
-}
 
-table button:hover {
-    background-color: #0056b3;
-}
 
 /* ---------- DROPZONE para imagen ---------- */
 
@@ -240,8 +243,8 @@ table button:hover {
 }
 
 .dropzone:hover {
-    border-color: #28a745;
-    background-color: #f0fff0;
+    border-color: var(--brand-celeste);
+    background-color: var(--brand-celeste-light);
 }
 
 .dropzone input[type="file"] {
@@ -273,7 +276,7 @@ table button:hover {
 
 .select-categoria:focus {
     outline: none;
-    border-color: #28a745;
+    border-color: var(--brand-celeste);
 }
 
 .categoria-scroll {
@@ -292,17 +295,145 @@ table button:hover {
     padding-right: 10px;
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+.tabla-productos {
+    --tabla-min-width: 760px;
 }
 
-.table th {
-    background-color: #e6b800;
-    color: #333;
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: bold;
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 0;
+    background-color: #fff;
+    border: 1px solid var(--tabla-border);
+    border-radius: 18px;
+    box-shadow: 0 14px 32px rgba(8, 58, 74, 0.08);
+    overflow: hidden;
+    font-size: 0.9rem;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, var(--tabla-header-start), var(--tabla-header-end));
+    color: var(--tabla-header-text);
+    padding: 12px 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 20px;
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 20px;
+}
+
+.table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #d9edf4;
+    background-color: transparent;
+    color: #1f2d35;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: var(--tabla-row-alt);
+}
+
+.table tbody tr:nth-child(odd) {
+    background-color: #fff;
+}
+
+.table tbody tr:hover {
+    background-color: var(--tabla-row-hover);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .tabla-productos .table thead th,
+    .tabla-productos .table td {
+        padding: 10px 12px;
+    }
+
+    .tabla-productos .table {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .tabla-productos .table thead th,
+    .tabla-productos .table td {
+        padding: 8px 10px;
+    }
+
+    .tabla-productos .table {
+        font-size: 0.8rem;
+    }
+}
+
+/* ---------- RESPONSIVE MODAL ---------- */
+
+@media (max-width: 992px) {
+    .modal {
+        padding: 20px;
+    }
+
+    .modal-contenido {
+        width: min(520px, 92vw);
+        padding: 24px 20px;
+    }
+
+    .dropzone {
+        padding: 32px;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-contenido {
+        width: 100%;
+        margin: 4% auto;
+        padding: 18px 16px;
+        border-radius: 10px;
+        max-height: 94vh;
+    }
+
+    .modal-contenido h3 {
+        font-size: 20px;
+    }
+
+    .modal-contenido label,
+    .modal-contenido input,
+    .modal-contenido textarea,
+    .modal-contenido select {
+        font-size: 14px;
+    }
+
+    .modal-contenido button[type="submit"] {
+        width: 100%;
+        margin-top: 16px;
+    }
+
+    .dropzone {
+        padding: 20px;
+        min-height: 110px;
+    }
+}
+
+@media (max-width: 400px) {
+    .modal-contenido {
+        padding: 16px 14px;
+    }
+
+    .cerrar {
+        top: 6px;
+        right: 10px;
+    }
 }

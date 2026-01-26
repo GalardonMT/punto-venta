@@ -7,10 +7,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mata el Hambre{% endblock %}</title>
+    <title>{% block title %}Punto de Venta{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/plantilla.css' %}">
+    <link rel="icon" href="data:,">
 
     {% block head %}{% endblock %}
 </head>
@@ -18,8 +19,7 @@
 
 <body>
     <div class="sidebar">
-        <h1>Mata el Hambre</h1>
-        <img src="{% static 'core/img/imagen.jpg' %}" alt="Logo Mata el Hambre">
+        <h1>Punto de Venta</h1>
         
         <div class="nav-buttons">
             <a href="{% url 'inicio' %}"><button class="nav-button">Inicios</button></a>
