@@ -11,6 +11,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group, User
 from django.core.paginator import Paginator
 from django.db.models import Sum
+from django.utils.http import urlencode
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render 
 from django.utils import timezone
@@ -439,8 +440,34 @@ def productos(request):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
 
-    productos = Producto.objects.all()
+    productos_qs = Producto.objects.all()
     form = ProductoForm()
+    categorias = Categoria.objects.all().order_by('nombre')
+
+    busqueda = (request.GET.get('q') or '').strip()
+    if busqueda:
+        productos_qs = productos_qs.filter(nombre__icontains=busqueda)
+
+    categoria_actual = None
+    categoria_param = request.GET.get('categoria')
+    if categoria_param:
+        try:
+            categoria_id = int(categoria_param)
+        except (TypeError, ValueError):
+            categoria_id = None
+
+        if categoria_id and categorias.filter(id=categoria_id).exists():
+            categoria_actual = categoria_id
+            productos_qs = productos_qs.filter(categoria_id=categoria_actual)
+
+    orden = request.GET.get('orden') or 'nombre_asc'
+    ordering_map = {
+        'precio_asc': 'precio',
+        'precio_desc': '-precio',
+        'nombre_desc': '-nombre',
+        'nombre_asc': 'nombre',
+    }
+    productos_qs = productos_qs.order_by(ordering_map.get(orden, 'nombre'))
 
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)  
@@ -451,10 +478,27 @@ def productos(request):
         else:
             messages.error(request, 'Error al agregar el producto. Verifica los datos.')
 
+    paginator = Paginator(productos_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    base_query = query_params.urlencode()
+    extra_query = f"&{base_query}" if base_query else ''
+
     return render(request, 'core/productos.html', {
-        'productos': productos,
+        'productos': page_obj.object_list,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'busqueda': busqueda,
+        'orden_actual': orden,
+        'categoria_actual': categoria_actual,
+        'base_query': base_query,
+        'extra_query': extra_query,
         'form': form,
-        'categorias': Categoria.objects.all(),
+        'categorias': categorias,
     })
 
 @csrf_exempt
