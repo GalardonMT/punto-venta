@@ -1,40 +1,100 @@
-let ordenOriginalCategorias = [];
-    function getCSRFToken() {
-        let cookieValue = null;
-        const name = 'csrftoken';
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+function getCSRFToken() {
+    let cookieValue = null;
+    const name = 'csrftoken';
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-        return cookieValue;
+    }
+    return cookieValue;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const inputBusqueda = document.getElementById('busquedaProducto');
+    const botonBusqueda = document.getElementById('botonBuscarProductos');
+    const editMetodoPago = document.getElementById('editMetodoPago');
+    const selectCategoria = document.getElementById('selectorCategoriaRapida');
+
+    if (editMetodoPago) {
+        editMetodoPago.addEventListener('change', mostrarCamposPagoEdicion);
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const inputBusqueda = document.getElementById('busquedaProducto');
-        const editMetodoPago = document.getElementById('editMetodoPago');
+    if (botonBusqueda) {
+        botonBusqueda.addEventListener('click', ejecutarBusquedaProductos);
+    }
 
-        if (editMetodoPago) {
-            editMetodoPago.addEventListener('change', mostrarCamposPagoEdicion);
-        }
-        
-        if (inputBusqueda) {
-            inputBusqueda.addEventListener('input', function () {
-                const texto = this.value.toLowerCase();
-                const productos = document.querySelectorAll('.burbuja-producto');
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', () => filtrarProductosPorTexto(inputBusqueda.value.toLowerCase()));
+        inputBusqueda.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                ejecutarBusquedaProductos();
+            }
+        });
+    }
 
-                productos.forEach(prod => {
-                    const nombre = prod.textContent.toLowerCase();
-                    prod.style.display = nombre.includes(texto) ? 'inline-block' : 'none';
-                });
-            });
+    if (selectCategoria) {
+        selectCategoria.addEventListener('change', () => filtrarProductosPorCategoria(selectCategoria.value));
+    }
+});
+
+function mostrarProducto(elemento) {
+    elemento.style.display = 'flex';
+}
+
+function ocultarProducto(elemento) {
+    elemento.style.display = 'none';
+}
+
+function mostrarTodosLosProductos() {
+    document.querySelectorAll('.burbuja-producto').forEach(mostrarProducto);
+}
+
+function ejecutarBusquedaProductos() {
+    const termino = document.getElementById('busquedaProducto')?.value || '';
+    filtrarProductosPorTexto(termino.toLowerCase());
+}
+
+function filtrarProductosPorTexto(texto) {
+    const productos = document.querySelectorAll('.burbuja-producto');
+    productos.forEach(prod => {
+        const nombre = prod.textContent.toLowerCase();
+        if (!texto || nombre.includes(texto)) {
+            mostrarProducto(prod);
+        } else {
+            ocultarProducto(prod);
         }
     });
+}
+
+function filtrarProductosPorCategoria(categoriaId) {
+    const productos = document.querySelectorAll('.burbuja-producto');
+    productos.forEach(prod => {
+        if (categoriaId === 'todas' || prod.dataset.categoria === categoriaId) {
+            mostrarProducto(prod);
+        } else {
+            ocultarProducto(prod);
+        }
+    });
+
+    const busqueda = document.getElementById('busquedaProducto');
+    if (busqueda) busqueda.value = '';
+}
+
+function resetFiltrosProductos() {
+    const select = document.getElementById('selectorCategoriaRapida');
+    if (select) select.value = 'todas';
+
+    const busqueda = document.getElementById('busquedaProducto');
+    if (busqueda) busqueda.value = '';
+
+    mostrarTodosLosProductos();
+}
 
     let productosSeleccionados = [];
     let total = 0;
@@ -64,43 +124,8 @@ let ordenOriginalCategorias = [];
         total = 0;
         actualizarDetalle();
 
-        // Limpia campo de búsqueda y dispara evento input
-        const busqueda = document.getElementById('busquedaProducto');
-        if (busqueda) {
-            busqueda.value = '';
-            busqueda.dispatchEvent(new Event('input'));
-        }
-
-        // Restaura el orden original de las categorías
-        const categoriasSelector = document.getElementById('categoriasSelector');
-        if (ordenOriginalCategorias.length) {
-            ordenOriginalCategorias.forEach(btn => categoriasSelector.appendChild(btn));
-        }
-
-        // Selecciona "Todas" en categorías y muestra todos los productos
-        document.querySelectorAll('.categoria-btn').forEach(btn => {
-            btn.classList.toggle('activo', btn.dataset.categoria === 'todas');
-        });
-        document.querySelectorAll('.burbuja-producto').forEach(p => {
-            p.style.display = 'inline-block';
-        });
-
-        // Selecciona "Todas" en categorías y muestra todos los productos
-        document.querySelectorAll('.categoria-btn').forEach(btn => {
-            btn.classList.toggle('activo', btn.dataset.categoria === 'todas');
-        });
-        document.querySelectorAll('.burbuja-producto').forEach(p => {
-            p.style.display = 'inline-block';
-        });
-
-        // Reinicia el scroll horizontal de la barra de categorías
-        const barraCategorias = document.getElementById('categoriasSelector');
-        if (barraCategorias) barraCategorias.scrollLeft = 0;
-        
-        // Muestra todos los productos ocultos por filtro anterior
-        document.querySelectorAll('.burbuja-producto').forEach(p => {
-            p.style.display = 'inline-block';
-        });
+        // Restablece filtros de productos y búsqueda
+        resetFiltrosProductos();
 
         // Reinicia fecha y hora
         const ahora = new Date();
@@ -381,26 +406,8 @@ let ordenOriginalCategorias = [];
             document.getElementById('modalComanda').dataset.comandaId = comandaId;
             document.getElementById('botonEliminarComanda').style.display = 'block';
 
-            // Limpia campo de búsqueda y dispara evento input
-            const busqueda = document.getElementById('busquedaProducto');
-            if (busqueda) {
-                busqueda.value = '';
-                busqueda.dispatchEvent(new Event('input'));
-            }
-
-            // Restaura el orden original de las categorías
-            const categoriasSelector = document.getElementById('categoriasSelector');
-            if (ordenOriginalCategorias.length) {
-                ordenOriginalCategorias.forEach(btn => categoriasSelector.appendChild(btn));
-            }
-
-            // Selecciona "Todas" en categorías y muestra todos los productos
-            document.querySelectorAll('.categoria-btn').forEach(btn => {
-                btn.classList.toggle('activo', btn.dataset.categoria === 'todas');
-            });
-            document.querySelectorAll('.burbuja-producto').forEach(p => {
-                p.style.display = 'inline-block';
-            });
+            // Restaura filtros visuales
+            resetFiltrosProductos();
         });
     }
 
@@ -538,24 +545,6 @@ let ordenOriginalCategorias = [];
     }
 
 
-    function activarFiltroBusqueda() {
-        const input = document.getElementById('busquedaProducto');
-        const productos = document.querySelectorAll('.burbuja-producto');
-
-        input.addEventListener('input', function () {
-            const texto = input.value.toLowerCase();
-
-            productos.forEach(producto => {
-                const nombre = producto.textContent.toLowerCase();
-                if (nombre.includes(texto)) {
-                    producto.style.display = 'inline-block';
-                } else {
-                    producto.style.display = 'none';
-                }
-            });
-        });
-    }
-    
     function eliminarComandaDesdeModal() {
         const comandaId = document.getElementById('modalComanda').dataset.comandaId;
         if (!comandaId) return;
@@ -681,90 +670,6 @@ let ordenOriginalCategorias = [];
         errorDiv.style.display = 'block';
     }
 
-    function filtrarPorCategoria(categoriaId) {
-        // Cambia el botón activo
-        document.querySelectorAll('.categoria-btn').forEach(btn => {
-            btn.classList.toggle('activo', btn.dataset.categoria === categoriaId);
-        });
-
-        // Muestra/oculta productos
-        document.querySelectorAll('.burbuja-producto').forEach(prod => {
-            if (categoriaId === 'todas' || prod.dataset.categoria === categoriaId) {
-                prod.style.display = 'inline-block';
-            } else {
-                prod.style.display = 'none';
-            }
-        });
-
-        // Limpia la barra de búsqueda
-        const busqueda = document.getElementById('busquedaProducto');
-        if (busqueda) busqueda.value = '';
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-        const inputBusqueda = document.getElementById('busquedaProducto');
-        const categoriasSelector = document.getElementById('categoriasSelector');
-        const categoriaBtns = Array.from(categoriasSelector.querySelectorAll('.categoria-btn'));
-
-        // Guarda el orden original solo una vez
-        ordenOriginalCategorias = categoriaBtns.slice();
-
-        if (inputBusqueda) {
-            inputBusqueda.addEventListener('input', function () {
-                const texto = this.value.toLowerCase();
-
-                // --- FILTRO DE PRODUCTOS ---
-                const productos = document.querySelectorAll('.burbuja-producto');
-                productos.forEach(prod => {
-                    const nombre = prod.textContent.toLowerCase();
-                    prod.style.display = nombre.includes(texto) ? 'inline-block' : 'none';
-                });
-
-                // --- REORDENAR CATEGORÍAS ---
-                if (texto === "") {
-                    // Restaurar orden original
-                    ordenOriginalCategorias.forEach(btn => categoriasSelector.appendChild(btn));
-                    return;
-                }
-
-                // "Todas" siempre primero
-                const todasBtn = ordenOriginalCategorias.find(btn => btn.dataset.categoria === "todas");
-                if (todasBtn) categoriasSelector.appendChild(todasBtn);
-
-                // Coincidentes primero, luego el resto
-                const coincidentes = ordenOriginalCategorias.filter(btn =>
-                    btn !== todasBtn && btn.textContent.toLowerCase().includes(texto)
-                );
-                const noCoincidentes = ordenOriginalCategorias.filter(btn =>
-                    btn !== todasBtn && !btn.textContent.toLowerCase().includes(texto)
-                );
-
-                coincidentes.forEach(btn => categoriasSelector.appendChild(btn));
-                noCoincidentes.forEach(btn => categoriasSelector.appendChild(btn));
-            });
-        }
-    });
-
-    function filtrarPorCategoria(categoriaId) {
-        // Cambia el botón activo
-        document.querySelectorAll('.categoria-btn').forEach(btn => {
-            btn.classList.toggle('activo', btn.dataset.categoria === categoriaId);
-        });
-
-        // Muestra/oculta productos
-        document.querySelectorAll('.burbuja-producto').forEach(prod => {
-            if (categoriaId === 'todas' || prod.dataset.categoria === categoriaId) {
-                prod.style.display = 'inline-block';
-            } else {
-                prod.style.display = 'none';
-            }
-        });
-
-        // Limpia la barra de búsqueda
-        const busqueda = document.getElementById('busquedaProducto');
-        if (busqueda) busqueda.value = '';
-    }
-
     function abrirDetalleCerrada(comandaId, esHistorial) {
         const url = esHistorial
             ? `/historial-comanda-detalle/${comandaId}/`
@@ -822,20 +727,20 @@ let ordenOriginalCategorias = [];
 
                         <div class="form-group">
                             <label>Productos:</label>
-                            <table style="width:100%; border-collapse:collapse; font-size: 15px;">
-                                <thead style="background-color: #f1f1f1;">
+                            <table class="tabla-detalle-comanda">
+                                <thead>
                                     <tr>
-                                        <th style="text-align:left; padding: 8px;">Producto</th>
-                                        <th style="text-align:center; padding: 8px;">Cantidad</th>
-                                        <th style="text-align:right; padding: 8px;">Subtotal</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${(data.detalles || []).map(item => `
-                                        <tr style="border-bottom: 1px solid #ddd;">
-                                            <td style="padding: 6px 8px;">${item.producto || ''}</td>
-                                            <td style="padding: 6px 8px; text-align:center;">${item.cantidad}</td>
-                                            <td style="padding: 6px 8px; text-align:right;">$${item.subtotal}</td>
+                                        <tr>
+                                            <td>${item.producto || ''}</td>
+                                            <td>${item.cantidad}</td>
+                                            <td>$${item.subtotal}</td>
                                         </tr>`).join('')}
                                 </tbody>
                             </table>

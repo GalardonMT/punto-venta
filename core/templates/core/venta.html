@@ -1,4 +1,4 @@
-{% extends "core/plantilla.html" %}
+﻿{% extends "core/plantilla.html" %}
 {% load static %}
 
 {% block head %}
@@ -13,7 +13,7 @@
         <div class="content-frame">
             <div class="content-header gestion-header">
                 <div class="header-title">
-                    <h2>📄 Gestión de Comandas</h2>
+                    <h2>🍽️ Gestión de Comandas</h2>
                 </div>
                 <div class="gestion-actions">
                     <button type="button" class="boton-agregar" onclick="abrirModal()">Nueva Comanda</button>
@@ -49,7 +49,6 @@
             <!-- MODAL DETALLE COMANDA CERRADA -->
             <div id="modalDetalleCerrada" class="modal" style="display:none;">
                 <div class="modal-contenido">
-                    <span class="cerrar" onclick="cerrarModalDetalleCerrada()">&times;</span>
                     <div id="detalleCerradaContenido"></div>
                 </div>
             </div>
@@ -57,23 +56,23 @@
             <!-- Modal Verificar y Eliminar Comanda -->
             <div id="modalEliminarComanda" class="modal">
                 <div class="modal-eliminar">
-                    <span class="cerrar" onclick="cerrarModalEliminar()">&times;</span><!-- -->
+                    <span class="cerrar" onclick="cerrarModalEliminar()">&times;</span>
                     <h3>Verificación de Administrador</h3>
                     <p>Ingrese credenciales para eliminar la comanda:</p>
 
                     <div class="form-group">
-                    <label for="adminEliminar">Usuario Administrador:</label>
-                    <input type="text" id="adminEliminar" autocomplete="off">
+                        <label for="adminEliminar">Usuario Administrador:</label>
+                        <input type="text" id="adminEliminar" autocomplete="off">
                     </div>
 
                     <div class="form-group">
-                    <label for="passEliminar">Contraseña:</label>
-                    <input type="password" id="passEliminar" autocomplete="off">
+                        <label for="passEliminar">Contraseña:</label>
+                        <input type="password" id="passEliminar" autocomplete="off">
                     </div>
 
                     <div class="form-group">
-                    <label for="motivoEliminar">Motivo de eliminación:</label>
-                    <textarea id="motivoEliminar" rows="3" placeholder="Ej: Error al ingresar la orden"></textarea>
+                        <label for="motivoEliminar">Motivo de eliminación:</label>
+                        <textarea id="motivoEliminar" rows="3" placeholder="Ej: Error al ingresar la orden"></textarea>
                     </div>
 
                     <div id="errorEliminar" class="mensaje-error" style="display: none;"></div>
@@ -81,10 +80,10 @@
                     <button onclick="verificarYEliminarComanda()">Verificar y Eliminar</button>
                 </div>
             </div>
+
             <div class="venta-panel">
-                <!-- Comandas Abiertas -->
                 <div class="seccion-comandas">
-                    <div class="titulo">🟡 Comandas Abiertas</div>
+                    <div class="titulo"> Comandas Abiertas</div>
                     <div class="contenedor-burbujas">
                         {% for comanda in comandas %}
                             {% if comanda.estado == 'abierta' %}
@@ -98,9 +97,8 @@
                     </div>
                 </div>
 
-                <!-- Comandas Cerradas -->
                 <div class="seccion-comandas">
-                    <div class="titulo">🟢 Comandas Cerradas</div>
+                    <div class="titulo"> Comandas Cerradas</div>
                     <div class="contenedor-burbujas">
                         {% for comanda in comandas %}
                             {% if comanda.estado == 'cerrada' %}
@@ -121,9 +119,8 @@
     <div id="modalComanda" class="modal" style="display: none;">
         <div class="modal-contenidoventa">
             <span class="cerrar" onclick="cerrarModal()">&times;</span>
-            <div style="flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; min-width: 0;">
+            <div class="modal-column columna-formulario">
                 <div class="columna-izquierda">
-                    <!-- Encabezado fijo -->
                     <div class="sticky-header-comanda">
                         <h2 class="content-header">Editando Comanda</h2>
                         <div class="info-encabezado">
@@ -132,56 +129,53 @@
                         </div>
                     </div>
 
-                    <!-- Contenido scrollable -->
                     <div class="contenido-formulario-comanda">
-                        <!-- Resto de inputs -->
                         <label for="cliente">Nombre del Cliente</label>
-                        <input type="text" id="cliente" placeholder="Ej: Juan Pérez" style="margin-bottom: 10px;">
+                        <input type="text" id="cliente" placeholder="Ej: Juan Pérez" class="input-cliente">
 
-                        <div style="display: flex; gap: 20px; margin-bottom: 0; flex: 1;">
-                            <div style="display: flex; flex-direction: column; width: 250px;">
+                        <div class="grupo-inputs">
+                            <div class="input-block">
                                 <label for="servicio">Tipo de Servicio</label>
-                                <select id="servicio" style="margin-bottom: 10px; width: 100%;">
-                                    <option value="servir">🍽️ Servir en local</option>
-                                <option value="delivery">🚴 Delivery</option>
-                                <option value="reserva">📅 Reserva</option>
+                                <select id="servicio">
+                                    <option value="servir"> Servir en local</option>
+                                    <option value="delivery"> Delivery</option>
+                                    <option value="reserva"> Reserva</option>
                                 </select>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; width: 250px;">
+                            <div class="input-block">
                                 <label for="metodo_pago">Método de Pago</label>
-                                <select id="metodo_pago" onchange="mostrarCamposPago()" style="margin-bottom: 10px; width: 100%;">
-                                    <option value="efectivo">💵 Efectivo</option>
-                                    <option value="tarjeta_credito">💳 Tarjeta Crédito</option>
-                                    <option value="tarjeta_debito">💳 Tarjeta Débito</option>
-                                    <option value="transferencia">📄 Transferencia</option>
-                                    <option value="mixto">Mixto (💵Efectivo + 💳Tarjeta + 📄Transferencia)</option>
+                                <select id="metodo_pago" onchange="mostrarCamposPago()">
+                                    <option value="efectivo"> Efectivo</option>
+                                    <option value="tarjeta_credito"> Tarjeta Crédito</option>
+                                    <option value="tarjeta_debito"> Tarjeta Débito</option>
+                                    <option value="transferencia"> Transferencia</option>
+                                    <option value="mixto">Mixto (Efectivo + Tarjeta + Transferencia)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div id="pago_mixto_campos" style="display: none; margin-bottom: 15px;">
+                        <div id="pago_mixto_campos" class="bloque-pago-mixto" style="display: none;">
                             <label for="monto_efectivo">Monto en Efectivo</label>
-                            <input type="number" id="monto_efectivo" min="0" step="10" value="0" style="width: 100%; margin-bottom: 5px;">
-                            
+                            <input type="number" id="monto_efectivo" min="0" step="10" value="0">
+
                             <label for="monto_tarjeta_debito">Monto en Tarjeta Debito</label>
-                            <input type="number" id="monto_tarjeta_debito" min="0" step="10" value="0" style="width: 100%; margin-bottom: 5px;">
+                            <input type="number" id="monto_tarjeta_debito" min="0" step="10" value="0">
 
                             <label for="monto_tarjeta_credito">Monto en Tarjeta Credito</label>
-                            <input type="number" id="monto_tarjeta_credito" min="0" step="10" value="0" style="width: 100%; margin-bottom: 5px;">
+                            <input type="number" id="monto_tarjeta_credito" min="0" step="10" value="0">
 
                             <label for="monto_transferencia">Monto en Transferencia</label>
-                            <input type="number" id="monto_transferencia" min="0" step="10" value="0" style="width: 100%; margin-bottom: 5px;">
+                            <input type="number" id="monto_transferencia" min="0" step="10" value="0">
                         </div>
-                        
+
                         <label for="notaComanda" class="label-nota">Nota de la Comanda</label>
                         <textarea id="notaComanda" placeholder="Ej: x1 Hamburguesa sin mayonesa, x1 italiano sin palta, etc..." class="textarea-nota"></textarea>
 
                         <h4>Detalle de Productos</h4>
-                        <ul id="detalle" style="flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; min-height: 150px;"></ul>
+                        <ul id="detalle" class="detalle-lista"></ul>
                     </div>
 
-                    <!-- Footer fijo -->
                     <div class="footer-modal-comanda">
                         <h4>Total: $<span id="total">0</span></h4>
                         <div class="grupo-botones">
@@ -192,24 +186,29 @@
                     </div>
                 </div>
             </div>
-            
-            <div style="width: 1px; background-color: rgba(0,0,0,0.1); margin: 10px 15px;"></div>
-            <div style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 30px;">
+
+            <div class="modal-divider"></div>
+
+            <div class="modal-column columna-productos">
                 <h2 class="sticky-header-comanda">Productos</h2>
-                    <div class="barra-busqueda sticky-search">
+                <div class="barra-busqueda sticky-search">
+                    <div class="input-wrapper input-busqueda-compacta">
                         <input type="text" id="busquedaProducto" placeholder="Buscar producto...">
-                        <span class="icono-busqueda">🔍</span>
+                        <span class="icono-busqueda"></span>
                     </div>
-                    <div id="categoriasSelector" class="categorias-selector sticky-header-comanda">
-                        <button class="categoria-btn activo" data-categoria="todas" onclick="filtrarPorCategoria('todas')">Todas</button>
-                        {% for categoria in categorias %}
-                            <button class="categoria-btn" data-categoria="{{ categoria.id }}" onclick="filtrarPorCategoria('{{ categoria.id }}')">
-                                {{ categoria.nombre }}
-                            </button>
-                        {% endfor %}
+                    <button type="button" class="boton-buscar-producto" id="botonBuscarProductos">Buscar</button>
+                    <div class="select-wrapper">
+                        <label for="selectorCategoriaRapida">Categoría</label>
+                        <select id="selectorCategoriaRapida">
+                            <option value="todas">Todas</option>
+                            {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="contenido-scroll" id="contenidoScroll">
-                    <div id="productosBurbuja" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                </div>
+                <div class="contenido-scroll" id="contenidoScroll">
+                    <div id="productosBurbuja" class="productos-burbuja">
                         {% for producto in productos %}
                         <div class="burbuja-producto"
                             data-id="{{ producto.id }}"
@@ -221,15 +220,16 @@
                                 <img src="{% static 'core/img/default.jpg' %}" alt="Sin imagen" class="img-productov">
                             {% endif %}
                             <div class="nombre-producto">{{ producto.nombre }}</div>
+                            <div class="precio-producto">${{ producto.precio|floatformat:0 }}</div>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
-            <!-- Modal de Superusuario (fuera de JS y del detalle dinámico) -->
         </div>
     </div>
-   
+
+    <!-- Modal de Superusuario (fuera de JS y del detalle dinámico) -->
     <div id="modalSuperAdmin" class="modal">
         <div class="modal-contenido">
             <span class="cerrar" onclick="cerrarModalSuperAdmin()">&times;</span>
@@ -254,7 +254,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
     window.verificarSuperusuarioUrl = "{% url 'verificar_superusuario' %}";
     window.csrfToken = "{{ csrf_token }}";

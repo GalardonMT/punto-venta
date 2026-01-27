@@ -5,6 +5,7 @@
 <head>
     <title>Punto de Venta - Usuarios</title>
     <link rel="stylesheet" href="{% static 'core/css/usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/productos.css' %}">
 </head>
 {% endblock %}
 
@@ -13,7 +14,9 @@
     <div class="content-frame">
         <div class="content-header">
             <h2>👤 Administración de Usuarios</h2>
-            <p>Total de usuarios registrados: {{ total_usuarios }}</p>
+            <span class="indicador">
+                <span class="indicador-label">Total de usuarios registrados: {{ total_usuarios }}</span>
+            </span>
         </div>
 
         <div class="table-responsive tabla-responsive">
