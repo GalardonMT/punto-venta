@@ -70,6 +70,13 @@ a {
     transition: all 0.3s ease;
 }
 
+.nav-button.activo {
+    background-color: #ffffff;
+    color: var(--color-accent-dark);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    transform: translateX(6px);
+}
+
 .nav-logout-button {
     display: block;
     width: 100%;
@@ -89,6 +96,12 @@ a {
     background-color: #a3d5e0;
     transform: translateX(5px);
     
+}
+
+.nav-button:focus-visible,
+.nav-logout-button:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
 }
 
 /* Contenido principal */

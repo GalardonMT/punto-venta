@@ -21,20 +21,22 @@
     <div class="sidebar">
         <h1>Punto de Venta</h1>
         
+        {% with current_url=request.resolver_match.url_name %}
         <div class="nav-buttons">
-            <a href="{% url 'inicio' %}"><button class="nav-button">Inicios</button></a>
-            <a href="{% url 'venta' %}"><button class="nav-button">Punto de venta</button></a>
+            <a href="{% url 'inicio' %}"><button class="nav-button{% if current_url == 'inicio' %} activo{% endif %}">Inicios</button></a>
+            <a href="{% url 'venta' %}"><button class="nav-button{% if current_url == 'venta' %} activo{% endif %}">Punto de venta</button></a>
             
             <!-- Boton solo puede ser visto por admin o por dueños -->
             {% if request.user|has_group:"Dueños" %}
-                <a href="{% url 'productos' %}"><button class="nav-button">Productos</button></a>
-                <a href="{% url 'reportes' %}"><button class="nav-button">Reportes</button></a>
-                <a href="{% url 'usuarios' %}"><button class="nav-button">Usuarios</button></a>
+                <a href="{% url 'productos' %}"><button class="nav-button{% if current_url == 'productos' %} activo{% endif %}">Productos</button></a>
+                <a href="{% url 'reportes' %}"><button class="nav-button{% if current_url == 'reportes' %} activo{% endif %}">Reportes</button></a>
+                <a href="{% url 'usuarios' %}"><button class="nav-button{% if current_url == 'usuarios' %} activo{% endif %}">Usuarios</button></a>
             {% endif %}
 
 
             <a href="{% url 'logout' %}" class="logout-btn" ><button class="nav-logout-button">Cerrar Sesión</button></a>
         </div>
+        {% endwith %}
     </div>
     {% block content %}{% endblock %}
     

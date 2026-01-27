@@ -12,39 +12,44 @@
 {% now "d/m/Y H:i" as timestamp_actual %}
 <div class="main-content">
     <div class="content-frame reportes-page">
-        <div class="reportes-hero">
-            <div class="hero-copy">
+        <div class="content-header header-bar reportes-header">
+            <div>
                 <h2>📊 Reportes de Ventas</h2>
-                <p>Visualiza el rendimiento {{ filtro }} y exporta la información clave para tu seguimiento.</p>
-                <div class="hero-total">
-                    <span>Total
-                        {% if filtro == 'diario' %}
-                            diario
-                        {% elif filtro == 'semanal' %}
-                            semanal
-                        {% elif filtro == 'mensual' %}
-                            mensual
-                        {% else %}
-                            general
-                        {% endif %}
-                    </span>
-                    <strong>${{ total_ventas|floatformat:0 }}</strong>
-                </div>
+                <p class="reportes-subtitle">Visualiza el rendimiento {{ filtro|capfirst }} y exporta la información clave para tu seguimiento.</p>
             </div>
-            <div class="hero-actions">
-                <form method="get" class="hero-filter">
+            <div class="reportes-actions">
+                <form method="get" class="reportes-filtro">
                     <label for="filtro">Ver periodo</label>
                     <select name="filtro" id="filtro" onchange="this.form.submit()">
                         <option value="diario" {% if filtro == 'diario' %}selected{% endif %}>Diario</option>
                         <option value="semanal" {% if filtro == 'semanal' %}selected{% endif %}>Semanal</option>
                         <option value="mensual" {% if filtro == 'mensual' %}selected{% endif %}>Mensual</option>
+                        <option value="anual" {% if filtro == 'anual' %}selected{% endif %}>Anual</option>
                     </select>
                 </form>
-                <div class="hero-buttons">
-                    <a href="{% url 'exportar_reportes_mes' %}" class="report-btn ghost">Exportar mes a Excel</a>
-                    <button type="button" class="report-btn accent" onclick="imprimirVentasDia()">Ventas finales del día</button>
+                <div class="reportes-buttons">
+                    <a href="{% url 'exportar_reportes_mes' %}" class="report-btn ghost">Exportar planilla a Excel</a>
+                    <button type="button" class="report-btn danger" onclick="imprimirVentasDia()">Ventas finales del día</button>
                 </div>
             </div>
+        </div>
+
+        <div class="resumen-resultados reportes-resumen">
+            <div class="resumen-indicadores">
+                <span class="indicador">
+                    <span class="indicador-label">Balance del periodo</span>
+                    <span class="indicador-valor">${{ total_ventas|floatformat:0 }}</span>
+                </span>
+                <span class="indicador">
+                    <span class="indicador-label">Registros listados</span>
+                    <span class="indicador-valor">{{ historial|length }}</span>
+                </span>
+                <span class="indicador">
+                    <span class="indicador-label">Actualizado</span>
+                    <span class="indicador-valor">{{ timestamp_actual }}</span>
+                </span>
+            </div>
+            <span class="reportes-etiqueta">Vista {{ filtro|capfirst }}</span>
         </div>
 
         <div class="tabla-wrapper">
@@ -97,28 +102,32 @@
             </div>
         </div>
 
-        <div class="barra-inferior">
-            <div class="paginacion-inferior">
-                {% if historial.has_other_pages %}
-                    <div class="pagination-buttons">
-                        {% if historial.has_previous %}
-                            <a href="?page={{ historial.previous_page_number }}&filtro={{ filtro }}">&laquo; Anterior</a>
-                        {% endif %}
-
-                        <span>Página {{ historial.number }} de {{ historial.paginator.num_pages }}</span>
-
-                        {% if historial.has_next %}
-                            <a href="?page={{ historial.next_page_number }}&filtro={{ filtro }}">Siguiente &raquo;</a>
-                        {% endif %}
-                    </div>
+        <div class="paginacion-productos reportes-pagination">
+            <div class="paginacion-info">
+                {% if historial.paginator.count %}
+                    <span>Mostrando {{ historial.start_index }} - {{ historial.end_index }} de {{ historial.paginator.count }}</span>
                 {% else %}
-                    <span class="pagination-placeholder">Mostrando página única</span>
+                    <span>No hay registros disponibles para este período.</span>
+                {% endif %}
+                <span class="balance-actual">Balance actual: ${{ total_ventas|floatformat:0 }}</span>
+            </div>
+            {% if historial.paginator.num_pages > 0 %}
+            <div class="paginacion-botones">
+                {% if historial.has_previous %}
+                    <a class="paginacion-btn" href="?page={{ historial.previous_page_number }}&filtro={{ filtro }}">&laquo; Anterior</a>
+                {% else %}
+                    <span class="paginacion-btn disabled">&laquo; Anterior</span>
+                {% endif %}
+
+                <span class="paginacion-estado">Página {{ historial.number }} de {{ historial.paginator.num_pages }}</span>
+
+                {% if historial.has_next %}
+                    <a class="paginacion-btn" href="?page={{ historial.next_page_number }}&filtro={{ filtro }}">Siguiente &raquo;</a>
+                {% else %}
+                    <span class="paginacion-btn disabled">Siguiente &raquo;</span>
                 {% endif %}
             </div>
-            <div class="total-general"> 
-                <strong>Balance actual:</strong>
-                <span>${{ total_ventas|floatformat:0 }}</span>
-            </div>
+            {% endif %}
         </div>
 
     </div>

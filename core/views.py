@@ -10,7 +10,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group, User
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
 from django.utils.http import urlencode
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render 
@@ -321,6 +321,8 @@ def reportes(request):
             fecha__year=hoy.year,
             fecha__month=hoy.month
         )
+    elif filtro == 'anual':
+        historial_queryset = HistorialComanda.objects.filter(fecha__year=hoy.year)
     else:
         historial_queryset = HistorialComanda.objects.none()
 
@@ -890,6 +892,24 @@ MESES_ES = [
     (9, "Septiembre"), (10, "Octubre"), (11, "Noviembre"), (12, "Diciembre")
 ]
 
+
+def _get_available_years():
+    """Devuelve todos los años presentes en el historial (o el año actual si no hay datos)."""
+    extremos = HistorialComanda.objects.aggregate(
+        min_fecha=Min('fecha'),
+        max_fecha=Max('fecha'),
+    )
+    hoy = timezone.localdate()
+
+    min_year = extremos['min_fecha'].year if extremos['min_fecha'] else hoy.year
+    max_year = extremos['max_fecha'].year if extremos['max_fecha'] else hoy.year
+
+    # Asegurar que al menos el año actual esté disponible
+    min_year = min(min_year, hoy.year)
+    max_year = max(max_year, hoy.year)
+
+    return list(range(min_year, max_year + 1))
+
 def exportar_reportes_mes(request):
     hoy = datetime.today()
     año_actual = datetime.now().year
@@ -902,12 +922,13 @@ def exportar_reportes_mes(request):
         año = hoy.year
 
     if request.GET.get('exportar') != '1':
-        años = list(range(2020, max(año_actual + 1, 2031)))
+        años = _get_available_years()
         context = {
             'meses': MESES_ES,
             'años': años,
             'mes_seleccionado': mes,
             'año_seleccionado': año,
+            'mes_nombre': dict(MESES_ES).get(mes, mes),
         }
         return render(request, 'core/exportar_reportes_mes.html', context)
 
@@ -969,7 +990,7 @@ def exportar_reportes_anual(request):
         año = hoy.year
 
     if request.GET.get('exportar_anual') != '1':
-        años = list(range(2020, max(año_actual + 1, 2031))) 
+        años = _get_available_years()
         context = {
             'años': años,
             'año_seleccionado': año,
