@@ -75,7 +75,7 @@
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    margin-top: 20px;
+    margin-top: 14px;
     border-radius: 18px;
 }
 
@@ -99,7 +99,7 @@
 
 @media (max-width: 768px) {
     .tabla-responsive {
-        margin-top: 16px;
+        margin-top: 12px;
     }
 
     .tabla-responsive table {

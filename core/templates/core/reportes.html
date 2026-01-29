@@ -18,15 +18,6 @@
                 <p class="reportes-subtitle">Visualiza el rendimiento {{ filtro|capfirst }} y exporta la información clave para tu seguimiento.</p>
             </div>
             <div class="reportes-actions">
-                <form method="get" class="reportes-filtro">
-                    <label for="filtro">Ver periodo</label>
-                    <select name="filtro" id="filtro" onchange="this.form.submit()">
-                        <option value="diario" {% if filtro == 'diario' %}selected{% endif %}>Diario</option>
-                        <option value="semanal" {% if filtro == 'semanal' %}selected{% endif %}>Semanal</option>
-                        <option value="mensual" {% if filtro == 'mensual' %}selected{% endif %}>Mensual</option>
-                        <option value="anual" {% if filtro == 'anual' %}selected{% endif %}>Anual</option>
-                    </select>
-                </form>
                 <div class="reportes-buttons">
                     <a href="{% url 'exportar_reportes_mes' %}" class="report-btn ghost">Exportar planilla a Excel</a>
                     <button type="button" class="report-btn danger" onclick="imprimirVentasDia()">Ventas finales del día</button>
@@ -50,6 +41,46 @@
                 </span>
             </div>
             <span class="reportes-etiqueta">Vista {{ filtro|capfirst }}</span>
+        </div>
+
+        <div class="filtros-reportes">
+            <form method="get" id="filtrosReportes" class="filtros-reportes-form">
+                <div class="filtro-grupo filtro-busqueda">
+                    <label for="busquedaReportes">Buscar</label>
+                    <input type="search" id="busquedaReportes" name="q" placeholder="Cliente o empleado" value="{{ busqueda }}">
+                </div>
+                <div class="filtro-grupo">
+                    <label for="filtroPeriodos">Ver periodo</label>
+                    <select id="filtroPeriodos" name="filtro" onchange="this.form.submit()">
+                        <option value="diario" {% if filtro == 'diario' %}selected{% endif %}>Diario</option>
+                        <option value="semanal" {% if filtro == 'semanal' %}selected{% endif %}>Semanal</option>
+                        <option value="mensual" {% if filtro == 'mensual' %}selected{% endif %}>Mensual</option>
+                        <option value="anual" {% if filtro == 'anual' %}selected{% endif %}>Anual</option>
+                    </select>
+                </div>
+                <div class="filtro-grupo">
+                    <label for="ordenReportes">Ordenar por</label>
+                    <select id="ordenReportes" name="orden" onchange="this.form.submit()">
+                        <option value="fecha_desc" {% if orden_actual == 'fecha_desc' %}selected{% endif %}>Fecha (recientes primero)</option>
+                        <option value="fecha_asc" {% if orden_actual == 'fecha_asc' %}selected{% endif %}>Fecha (antiguas primero)</option>
+                        <option value="total_desc" {% if orden_actual == 'total_desc' %}selected{% endif %}>Total (mayor a menor)</option>
+                        <option value="total_asc" {% if orden_actual == 'total_asc' %}selected{% endif %}>Total (menor a mayor)</option>
+                    </select>
+                </div>
+                <div class="filtro-grupo">
+                    <label for="metodoPagoFiltro">Método de pago</label>
+                    <select id="metodoPagoFiltro" name="metodo_pago" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        {% for metodo in metodos_pago %}
+                            <option value="{{ metodo }}" {% if metodo_actual == metodo %}selected{% endif %}>{{ metodo|capfirst }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <noscript>
+                    <button type="submit" class="report-btn accent">Aplicar filtros</button>
+                </noscript>
+            </form>
+            <a href="?" class="boton-limpiar">Limpiar filtros</a>
         </div>
 
         <div class="tabla-wrapper">
@@ -114,7 +145,7 @@
             {% if historial.paginator.num_pages > 0 %}
             <div class="paginacion-botones">
                 {% if historial.has_previous %}
-                    <a class="paginacion-btn" href="?page={{ historial.previous_page_number }}&filtro={{ filtro }}">&laquo; Anterior</a>
+                    <a class="paginacion-btn" href="?page={{ historial.previous_page_number }}{{ extra_query }}">&laquo; Anterior</a>
                 {% else %}
                     <span class="paginacion-btn disabled">&laquo; Anterior</span>
                 {% endif %}
@@ -122,7 +153,7 @@
                 <span class="paginacion-estado">Página {{ historial.number }} de {{ historial.paginator.num_pages }}</span>
 
                 {% if historial.has_next %}
-                    <a class="paginacion-btn" href="?page={{ historial.next_page_number }}&filtro={{ filtro }}">Siguiente &raquo;</a>
+                    <a class="paginacion-btn" href="?page={{ historial.next_page_number }}{{ extra_query }}">Siguiente &raquo;</a>
                 {% else %}
                     <span class="paginacion-btn disabled">Siguiente &raquo;</span>
                 {% endif %}
@@ -148,5 +179,18 @@ function imprimirVentasDia() {
         alert("Error al imprimir: " + error);
     });
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('busquedaReportes');
+    const form = document.getElementById('filtrosReportes');
+    if (input && form) {
+        let debounceId;
+        input.addEventListener('input', () => {
+            clearTimeout(debounceId);
+            debounceId = setTimeout(() => form.submit(), 400);
+        });
+    }
+});
 </script>
 {% endblock %}

@@ -156,9 +156,14 @@
                             <td><span id="categoria-{{ producto.id }}" data-valor="{% if producto.categoria %}{{ producto.categoria.id }}{% else %}{% endif %}">{% if producto.categoria %}{{ producto.categoria.nombre }}{% else %}Sin categoría{% endif %}</span></td>
                             <td><span id="precio-{{ producto.id }}">{{ producto.precio }}</span></td>
                             <td id="acciones-{{ producto.id }}">
-                                <button type="button" onclick="activarEdicion('{{ producto.id }}')">Editar</button>
                                 <form method="POST" action="{% url 'eliminar_producto' producto.id %}" style="display:inline;">
                                     {% csrf_token %}
+                                    <button type="button"
+                                        onclick="abrirModalEditarProducto(this)"
+                                        data-id="{{ producto.id }}"
+                                        data-imagen-url="{% if producto.imagen %}{{ producto.imagen.url }}{% endif %}">
+                                        Editar
+                                    </button>
                                     <button onclick="return confirm('¿Eliminar este producto?')" style="background-color:red;">Eliminar</button>
                                 </form>
                             </td>
@@ -194,21 +199,52 @@
                     </div>
                 </div>
 
+                <div id="modalEditarProducto" class="modal-editar">
+                    <div class="modal-contenido-editar">
+                        <span class="cerrar-editar" onclick="cerrarModalEditarProducto()">&times;</span>
+                        <h2>Editar producto</h2>
+                        <form id="formEditarProducto" method="post" enctype="multipart/form-data" onsubmit="enviarEdicionProducto(event)">
+                            {% csrf_token %}
+                            <input type="hidden" id="editarProductoId">
+                            <input type="hidden" name="borrar_imagen" id="editarBorrarImagen" value="0">
+
+                            <label for="editarNombre">Nombre:</label>
+                            <input type="text" id="editarNombre" name="nombre" required>
+
+                            <label for="editarDescripcion">Descripción:</label>
+                            <textarea id="editarDescripcion" name="descripcion" rows="3"></textarea>
+
+                            <label for="editarCategoria">Categoría:</label>
+                            <select id="editarCategoria" name="categoria" class="grupo-select">
+                                <option value="">Sin categoría</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <label for="editarPrecio">Precio:</label>
+                            <input type="number" id="editarPrecio" name="precio" step="0.01" required>
+
+                            <label for="editarImagen">Imagen:</label>
+                            <input type="file" id="editarImagen" name="imagen" accept="image/*">
+                            <div id="editarImagenPreview" class="editar-imagen-preview"></div>
+                            <button type="button" class="btn-detalle btn-imagen" id="btnToggleImagen" onclick="toggleEliminarImagenEditar()">Eliminar imagen actual</button>
+
+                            <div class="modal-actions">
+                                <button type="submit" class="btn-detalle">Guardar Cambios</button>
+                                <button type="button" class="btn-detalle" onclick="cerrarModalEditarProducto()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
         </div>
     </div>
 
     <script>
     // Definir variables globales ANTES de cargar el archivo JS externo
     window.csrfToken = "{{ csrf_token }}";
-    window.categoriasOpciones = `{% for cat in categorias %}<option value="{{ cat.id }}">{{ cat.nombre }}</option>{% endfor %}`;
     window.editarProductoUrl = "{% url 'editar_producto' 0 %}";
-    window.eliminarProductoUrl = "{% url 'eliminar_producto' 0 %}";
-
-    // Console log para depuración
-    console.log('Variables globales definidas en template:');
-    console.log('csrfToken:', window.csrfToken);
-    console.log('editarProductoUrl:', window.editarProductoUrl);
-    console.log('eliminarProductoUrl:', window.eliminarProductoUrl);
 
     // Mejorar la experiencia de subida de imágenes
     document.addEventListener('DOMContentLoaded', function() {

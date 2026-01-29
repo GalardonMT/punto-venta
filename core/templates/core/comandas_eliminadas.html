@@ -43,15 +43,25 @@
                         <p>No hay comandas eliminadas.</p>
                     {% endfor %}
                 </div>
-                <!-- Paginación -->
-                <div class="paginacion">
-                    Página {{ comandas.number }} de {{ comandas.paginator.num_pages }}
-                    {% if comandas.has_previous %}
-                        <a href="?page={{ comandas.previous_page_number }}">Anterior</a>
-                    {% endif %}
-                    {% if comandas.has_next %}
-                        <a href="?page={{ comandas.next_page_number }}">Siguiente</a>
-                    {% endif %}
+                <div class="paginacion-productos paginacion-eliminadas">
+                    <div class="paginacion-info">
+                        <span>Mostrando {{ comandas.start_index }} - {{ comandas.end_index }} de {{ comandas.paginator.count }}</span>
+                    </div>
+                    <div class="paginacion-botones">
+                        {% if comandas.has_previous %}
+                            <a class="paginacion-btn" href="?page={{ comandas.previous_page_number }}">&laquo; Anterior</a>
+                        {% else %}
+                            <span class="paginacion-btn disabled">&laquo; Anterior</span>
+                        {% endif %}
+
+                        <span class="paginacion-estado">Página {{ comandas.number }} de {{ comandas.paginator.num_pages }}</span>
+
+                        {% if comandas.has_next %}
+                            <a class="paginacion-btn" href="?page={{ comandas.next_page_number }}">Siguiente &raquo;</a>
+                        {% else %}
+                            <span class="paginacion-btn disabled">Siguiente &raquo;</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

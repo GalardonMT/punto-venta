@@ -10,7 +10,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group, User
 from django.core.paginator import Paginator
-from django.db.models import Max, Min, Sum
+from django.db.models import Max, Min, Sum, Q
 from django.utils.http import urlencode
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render 
@@ -166,8 +166,11 @@ def usuarios(request):
     if not _user_is_owner(request.user):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
-    usuarios = User.objects.all().order_by('date_joined')
-    total_usuarios = usuarios.count()
+    usuarios_qs = User.objects.all().order_by('date_joined')
+    paginator = Paginator(usuarios_qs, 10)
+    page_number = request.GET.get('page')
+    usuarios = paginator.get_page(page_number)
+    total_usuarios = paginator.count
     return render(request, 'core/usuarios.html', {
         'usuarios': usuarios,
         'total_usuarios': total_usuarios
@@ -308,6 +311,9 @@ def reportes(request):
         return redirect('inicio')
 
     filtro = request.GET.get('filtro', 'diario')
+    busqueda = (request.GET.get('q') or '').strip()
+    metodo_actual = (request.GET.get('metodo_pago') or '').strip()
+    orden = request.GET.get('orden') or 'fecha_desc'
     hoy = timezone.localdate()
     historial_queryset = None
 
@@ -326,23 +332,58 @@ def reportes(request):
     else:
         historial_queryset = HistorialComanda.objects.none()
 
-    # Total de ventas del queryset completo (sin paginación)
+    if busqueda:
+        historial_queryset = historial_queryset.filter(
+            Q(nombre_cliente__icontains=busqueda) |
+            Q(empleado__username__icontains=busqueda)
+        )
+
+    if metodo_actual:
+        historial_queryset = historial_queryset.filter(metodo_pago=metodo_actual)
+
+    # Total de ventas del queryset filtrado (sin paginación)
     total_ventas = historial_queryset.aggregate(total=Sum('total'))['total'] or 0
+
+    ordering_map = {
+        'fecha_asc': 'fecha',
+        'fecha_desc': '-fecha',
+        'total_asc': 'total',
+        'total_desc': '-total',
+    }
+    historial_queryset = historial_queryset.order_by(ordering_map.get(orden, '-fecha'))
 
     # Paginación
     page_number = request.GET.get('page')
-    paginator = Paginator(historial_queryset.order_by('-fecha'), 13)
+    paginator = Paginator(historial_queryset, 10)
     historial = paginator.get_page(page_number)
+
+    metodos_pago = (HistorialComanda.objects
+                    .exclude(metodo_pago__isnull=True)
+                    .exclude(metodo_pago='')
+                    .values_list('metodo_pago', flat=True)
+                    .distinct()
+                    .order_by('metodo_pago'))
+
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    extra_query = query_params.urlencode()
+    extra_query = f"&{extra_query}" if extra_query else ''
 
     return render(request, 'core/reportes.html', {
         'historial': historial,
         'total_ventas': total_ventas,
         'filtro': filtro,
+        'busqueda': busqueda,
+        'orden_actual': orden,
+        'metodo_actual': metodo_actual,
+        'metodos_pago': metodos_pago,
+        'extra_query': extra_query,
     })
 
 
 @require_POST
-@login_required(login_url='login')
+@login_required(login_url='login') 
 def nueva_comanda(request):
     comanda = Comanda.objects.create(
         fecha=timezone.now(),
@@ -1113,7 +1154,7 @@ def comandas_eliminadas(request):
         return redirect('inicio')
 
     todas = EliminacionComanda.objects.all().order_by('-fecha_eliminacion')
-    paginator = Paginator(todas, 50)  # 50 por página
+    paginator = Paginator(todas, 16)  # 50 por página
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     return render(request, 'core/comandas_eliminadas.html', {'comandas': page_obj})

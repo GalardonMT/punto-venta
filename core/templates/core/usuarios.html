@@ -84,9 +84,39 @@
                         </td>
 
                     </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;">No hay usuarios registrados.</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="paginacion-productos">
+                <div class="paginacion-info">
+                    {% if usuarios.paginator.count %}
+                        <span>Mostrando {{ usuarios.start_index }} - {{ usuarios.end_index }} de {{ usuarios.paginator.count }}</span>
+                    {% else %}
+                        <span>No hay usuarios registrados.</span>
+                    {% endif %}
+                </div>
+                {% if usuarios.paginator.num_pages > 0 %}
+                <div class="paginacion-botones">
+                    {% if usuarios.has_previous %}
+                        <a class="paginacion-btn" href="?page={{ usuarios.previous_page_number }}">&laquo; Anterior</a>
+                    {% else %}
+                        <span class="paginacion-btn disabled">&laquo; Anterior</span>
+                    {% endif %}
+
+                    <span class="paginacion-estado">Página {{ usuarios.number }} de {{ usuarios.paginator.num_pages }}</span>
+
+                    {% if usuarios.has_next %}
+                        <a class="paginacion-btn" href="?page={{ usuarios.next_page_number }}">Siguiente &raquo;</a>
+                    {% else %}
+                        <span class="paginacion-btn disabled">Siguiente &raquo;</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
             <div id="modalEditarUsuario" class="modal-editar">
                 <div class="modal-contenido-editar">
                     <span class="cerrar-editar" onclick="cerrarModalEditar()">&times;</span>
