@@ -21,12 +21,18 @@
                 const grupo = document.getElementById('editarGrupo').value;
 
                 if (!username || !password || !confirmar) {
-                    alert("Debe llenar todos los campos");
+                    showAppModal("Debe llenar todos los campos", {
+                        variant: 'warning',
+                        title: 'Datos incompletos'
+                    });
                     return;
                 }
 
                 if (password !== confirmar) {
-                    alert("Las contraseñas no coinciden");
+                    showAppModal("Las contraseñas no coinciden", {
+                        variant: 'warning',
+                        title: 'Contraseñas distintas'
+                    });
                     return;
                 }
 
@@ -41,14 +47,23 @@
                 .then(res => res.ok ? res.json() : Promise.reject("Error en la respuesta"))
                 .then(data => {
                     if (data.success) {
-                        alert("Usuario actualizado correctamente");
                         cerrarModalEditar();
-                        location.reload();
+                        showAppModal("Usuario actualizado correctamente", {
+                            variant: 'success',
+                            title: 'Usuario actualizado',
+                            onConfirm: () => location.reload()
+                        });
                     } else {
-                        alert("Error: " + (data.error || "No se pudo actualizar"));
+                        showAppModal("Error: " + (data.error || "No se pudo actualizar"), {
+                            variant: 'danger',
+                            title: 'Error al actualizar'
+                        });
                     }
                 })
-                .catch(error => alert("Error al actualizar usuario: " + error));
+                .catch(error => showAppModal("Error al actualizar usuario: " + error, {
+                    variant: 'danger',
+                    title: 'Error al actualizar'
+                }));
             }
 
             function getCSRFToken() {
@@ -108,10 +123,16 @@
                 })
                 .then(res => {
                     if (res.ok) {
-                        alert("Estado actualizado correctamente");
-                        location.reload();
+                        showAppModal("Estado actualizado correctamente", {
+                            variant: 'success',
+                            title: 'Estado actualizado',
+                            onConfirm: () => location.reload()
+                        });
                     } else {
-                        alert("Error al actualizar estado");
+                        showAppModal("Error al actualizar estado", {
+                            variant: 'danger',
+                            title: 'Error al actualizar'
+                        });
                     }
                 });
             }
@@ -153,14 +174,23 @@
                 })
                 .then(res => {
                     if (res.ok) {
-                        alert("Usuario eliminado correctamente");
-                        location.reload();
+                        showAppModal("Usuario eliminado correctamente", {
+                            variant: 'success',
+                            title: 'Usuario eliminado',
+                            onConfirm: () => location.reload()
+                        });
                     } else {
-                        alert("Error al eliminar el usuario");
+                        showAppModal("Error al eliminar el usuario", {
+                            variant: 'danger',
+                            title: 'Error al eliminar'
+                        });
                     }
                 })
                 .catch(error => {
-                    alert("Error: " + error);
+                    showAppModal("Error: " + error, {
+                        variant: 'danger',
+                        title: 'Error al eliminar'
+                    });
                 })
                 .finally(() => {
                     cerrarModalEliminar();
@@ -198,14 +228,23 @@
                 })
                 .then(res => {
                     if (res.ok) {
-                        alert("Estado actualizado correctamente");
-                        location.reload();
+                        showAppModal("Estado actualizado correctamente", {
+                            variant: 'success',
+                            title: 'Estado actualizado',
+                            onConfirm: () => location.reload()
+                        });
                     } else {
-                        alert("Error al actualizar estado");
+                        showAppModal("Error al actualizar estado", {
+                            variant: 'danger',
+                            title: 'Error al actualizar'
+                        });
                     }
                 })
                 .catch(error => {
-                    alert("Error: " + error);
+                    showAppModal("Error: " + error, {
+                        variant: 'danger',
+                        title: 'Error al actualizar'
+                    });
                 })
                 .finally(() => {
                     cerrarModalEstado();

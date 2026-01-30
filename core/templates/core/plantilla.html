@@ -13,6 +13,130 @@
     <link rel="stylesheet" href="{% static 'core/css/plantilla.css' %}">
     <link rel="icon" href="data:,">
 
+    <script>
+        (function () {
+            const pendingMessages = [];
+            const variants = {
+                info: { icon: 'ℹ️', title: 'Aviso' },
+                success: { icon: '✅', title: 'Éxito' },
+                warning: { icon: '⚠️', title: 'Atención' },
+                danger: { icon: '⛔', title: 'Error' }
+            };
+
+            let refs = null;
+            let confirmCallback = null;
+            let cancelCallback = null;
+
+            function hideModal(action) {
+                if (!refs || !refs.modal.classList.contains('is-visible')) {
+                    confirmCallback = null;
+                    cancelCallback = null;
+                    return;
+                }
+
+                refs.modal.classList.remove('is-visible');
+                refs.modal.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('app-modal-open');
+
+                const callback = action === 'confirm'
+                    ? confirmCallback
+                    : action === 'cancel'
+                        ? cancelCallback
+                        : null;
+
+                confirmCallback = null;
+                cancelCallback = null;
+
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+
+            function initModal() {
+                if (refs) return refs;
+                const modal = document.getElementById('app-modal');
+                if (!modal) return null;
+
+                refs = {
+                    modal,
+                    title: modal.querySelector('.app-modal__title'),
+                    message: modal.querySelector('.app-modal__message'),
+                    confirmBtn: modal.querySelector('.app-modal__confirm'),
+                    cancelBtn: modal.querySelector('.app-modal__cancel'),
+                    icon: modal.querySelector('.app-modal__icon-symbol')
+                };
+
+                const closeWithConfirm = () => hideModal('confirm');
+                const closeWithCancel = () => hideModal('cancel');
+
+                refs.confirmBtn.addEventListener('click', closeWithConfirm);
+                refs.cancelBtn.addEventListener('click', closeWithCancel);
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) closeWithCancel();
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') closeWithCancel();
+                });
+
+                return refs;
+            }
+
+            function showNow(message, options) {
+                if (!refs && !initModal()) {
+                    window.alert(typeof message === 'undefined' ? '' : message);
+                    if (options && typeof options.onConfirm === 'function') {
+                        options.onConfirm();
+                    }
+                    return;
+                }
+
+                const settings = Object.assign({ variant: 'info' }, options);
+                const meta = variants[settings.variant] || variants.info;
+
+                refs.modal.classList.remove('app-modal--info', 'app-modal--success', 'app-modal--warning', 'app-modal--danger');
+                refs.modal.classList.add(`app-modal--${settings.variant}`);
+
+                refs.title.textContent = settings.title || meta.title;
+                refs.message.textContent = typeof message === 'string' ? message : String(message ?? '');
+                refs.icon.textContent = settings.icon || meta.icon;
+                refs.confirmBtn.textContent = settings.confirmText || 'Entendido';
+                refs.cancelBtn.textContent = settings.cancelText || 'Cancelar';
+                refs.cancelBtn.hidden = !settings.cancelText;
+
+                refs.modal.classList.add('is-visible');
+                refs.modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('app-modal-open');
+
+                confirmCallback = typeof settings.onConfirm === 'function' ? settings.onConfirm : null;
+                cancelCallback = typeof settings.onCancel === 'function' ? settings.onCancel : null;
+
+                const focusTarget = settings.cancelText ? refs.cancelBtn : refs.confirmBtn;
+                setTimeout(() => focusTarget.focus(), 50);
+            }
+
+            window.showAppModal = function (message, options) {
+                if (document.readyState === 'loading' && !refs) {
+                    pendingMessages.push([message, options]);
+                    return;
+                }
+                showNow(message, options || {});
+            };
+
+            window.hideAppModal = function () {
+                hideModal('cancel');
+            };
+
+            window.addEventListener('DOMContentLoaded', () => {
+                initModal();
+                if (pendingMessages.length) {
+                    const [message, options] = pendingMessages.shift();
+                    pendingMessages.length = 0;
+                    showNow(message, options || {});
+                }
+            });
+        })();
+    </script>
+
     {% block head %}{% endblock %}
 </head>
 
@@ -49,6 +173,22 @@
         {% endfor %}
     </div>
     {% endif %}
+
+    <div id="app-modal" class="app-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="app-modal__panel" role="document">
+            <div class="app-modal__icon">
+                <span class="app-modal__icon-symbol" aria-hidden="true">ℹ️</span>
+            </div>
+            <div class="app-modal__body">
+                <h3 class="app-modal__title">Aviso</h3>
+                <p class="app-modal__message"></p>
+            </div>
+            <div class="app-modal__actions">
+                <button type="button" class="app-modal__button app-modal__confirm">Entendido</button>
+                <button type="button" class="app-modal__button app-modal__cancel" hidden>Cancelar</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 <script>

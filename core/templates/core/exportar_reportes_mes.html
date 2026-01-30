@@ -31,7 +31,10 @@
                     <p class="step-label">Mes específico</p>
                     <h3>Descargar detalle mensual</h3>
                 </header>
-                <form method="get" action="{% url 'exportar_reportes_mes' %}">
+                    <form method="get" action="{% url 'exportar_reportes_mes' %}"
+                        data-export-confirm="true"
+                        data-confirm-message="¿Deseas descargar el reporte mensual seleccionado?"
+                        data-confirm-text="Descargar mes">
                     <div class="field-row">
                         <label class="field-group">
                             <span>Mes a exportar</span>
@@ -50,7 +53,9 @@
                             </select>
                         </label>
                     </div>
-                    <button type="submit" name="exportar" value="1" class="report-btn accent full-width">Descargar mes</button>
+                    <div class="form-actions">
+                        <button type="submit" name="exportar" value="1" class="report-btn accent full-width">Descargar mes</button>
+                    </div>
                 </form>
             </article>
 
@@ -59,7 +64,10 @@
                     <p class="step-label">Resumen anual</p>
                     <h3>Consolidado de ventas</h3>
                 </header>
-                <form method="get" action="{% url 'exportar_reportes_anual' %}">
+                    <form method="get" action="{% url 'exportar_reportes_anual' %}"
+                        data-export-confirm="true"
+                        data-confirm-message="¿Descargar el consolidado anual seleccionado?"
+                        data-confirm-text="Descargar año">
                     <div class="field-row">
                         <label class="field-group">
                             <span>Año</span>
@@ -70,11 +78,57 @@
                             </select>
                         </label>
                     </div>
-                    <button type="submit" name="exportar_anual" value="1" class="report-btn accent full-width">Descargar año</button>
+                    <div class="form-actions">
+                        <button type="submit" name="exportar_anual" value="1" class="report-btn accent full-width">Descargar año</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="export-step">
+                <header class="step-header">
+                    <p class="step-label">Histórico completo</p>
+                    <h3>Registro de ventas históricas</h3>
+                </header>
+                <p>Incluye todas las ventas registradas en el sistema desde el primer día disponible.</p>
+                    <form method="get" action="{% url 'exportar_reportes_mes' %}"
+                        data-export-confirm="true"
+                        data-confirm-message="Esta acción descargará todo el historial de ventas. ¿Continuar?"
+                        data-confirm-text="Descargar histórico">
+                    <input type="hidden" name="exportar_historico" value="1">
+                    <div class="form-actions">
+                        <button type="submit" class="report-btn accent full-width">Descargar histórico</button>
+                    </div>
                 </form>
             </article>
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportForms = document.querySelectorAll('[data-export-confirm]');
+    exportForms.forEach((form) => {
+        form.addEventListener('submit', function (event) {
+            if (form.dataset.confirmed === 'true') {
+                form.dataset.confirmed = '';
+                return;
+            }
+
+            event.preventDefault();
+            const message = form.dataset.confirmMessage || '¿Deseas descargar este reporte?';
+            const confirmText = form.dataset.confirmText || 'Descargar';
+
+            showAppModal(message, {
+                title: 'Confirmar descarga',
+                confirmText,
+                cancelText: 'Cancelar',
+                onConfirm: () => {
+                    form.dataset.confirmed = 'true';
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
 

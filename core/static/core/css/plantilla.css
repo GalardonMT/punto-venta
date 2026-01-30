@@ -97,6 +97,124 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
+/* ---------- Global modal ---------- */
+.app-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(9, 28, 45, 0.6);
+    z-index: 1100;
+}
+
+.app-modal.is-visible {
+    display: flex;
+}
+
+body.app-modal-open {
+    overflow: hidden;
+}
+
+.app-modal__panel {
+    width: min(420px, 100%);
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px 26px;
+    box-shadow: 0 24px 60px rgba(8, 24, 44, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+}
+
+.app-modal__icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    margin: 0 auto 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    background: #e7f0ff;
+    color: #1f2a37;
+}
+
+.app-modal__title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #142032;
+}
+
+.app-modal__message {
+    color: #415166;
+    line-height: 1.4;
+    font-size: 0.98rem;
+}
+
+.app-modal__actions {
+    margin-top: 8px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.app-modal__button {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-modal__button:focus-visible {
+    outline: 3px solid rgba(47, 130, 173, 0.35);
+    outline-offset: 2px;
+}
+
+.app-modal__confirm {
+    background: #0f8fac;
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(15, 143, 172, 0.28);
+}
+
+.app-modal__confirm:hover {
+    transform: translateY(-1px);
+}
+
+.app-modal__cancel {
+    background: #eef2f6;
+    color: #1f2a37;
+    box-shadow: inset 0 0 0 1px rgba(23, 43, 77, 0.12);
+}
+
+.app-modal--success .app-modal__icon {
+    background: #e6f7ef;
+    color: #0f5132;
+}
+
+.app-modal--warning .app-modal__icon {
+    background: #fff5e6;
+    color: #b45309;
+}
+
+.app-modal--danger .app-modal__icon {
+    background: #ffe7e7;
+    color: #b42318;
+}
+
+@media (max-width: 480px) {
+    .app-modal__panel {
+        padding: 22px 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .tabla-responsive {
         margin-top: 12px;

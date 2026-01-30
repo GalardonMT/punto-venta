@@ -273,14 +273,20 @@ function resetFiltrosProductos() {
         let montoTransferencia = parseInt(montoTransferenciaInput.value) || 0;
 
         if (!cliente || productosSeleccionados.length === 0) {
-            alert("Debe ingresar el cliente y al menos un producto.");
+            showAppModal("Debe ingresar el cliente y al menos un producto.", {
+                variant: 'warning',
+                title: 'Datos incompletos'
+            });
             return;
         }
 
         if (metodoPago === 'mixto') {
             const suma = montoEfectivo + montoTarjetaCredito + montoTarjetaDebito + montoTransferencia;
             if (suma !== totalComanda) {
-                alert(`⚠️ La suma de los pagos ($${suma}) no coincide con el total: $${totalComanda}`);
+                showAppModal(`⚠️ La suma de los pagos ($${suma}) no coincide con el total: $${totalComanda}`, {
+                    variant: 'warning',
+                    title: 'Pagos incompletos'
+                });
                 return;
             }
         } else if (metodoPago === 'efectivo') {
@@ -352,12 +358,18 @@ function resetFiltrosProductos() {
                 }
             } else {
                 console.error('Error del servidor:', data.message);
-                alert(`Error al guardar la comanda: ${data.message || 'Error desconocido'}`);
+                showAppModal(`Error al guardar la comanda: ${data.message || 'Error desconocido'}`, {
+                    variant: 'danger',
+                    title: 'Error al guardar'
+                });
             }
         })
         .catch(error => {
             console.error('Error en la petición:', error);
-            alert(`Error al conectar con el servidor: ${error.message}`);
+            showAppModal(`Error al conectar con el servidor: ${error.message}`, {
+                variant: 'danger',
+                title: 'Error de conexión'
+            });
         });
     }
 
@@ -452,7 +464,10 @@ function resetFiltrosProductos() {
                 cerrarModalEdicion();
                 actualizarComandas();
             } else {
-                alert("Error al guardar cambios.");
+                showAppModal("Error al guardar cambios.", {
+                    variant: 'danger',
+                    title: 'Error al guardar'
+                });
             }
         });
     }
@@ -486,7 +501,10 @@ function resetFiltrosProductos() {
                 cerrarModalEdicion();
                 actualizarComandas();
             } else {
-                alert("No se pudo eliminar la comanda.");
+                showAppModal("No se pudo eliminar la comanda.", {
+                    variant: 'danger',
+                    title: 'Error al eliminar'
+                });
             }
         });
     }
@@ -647,10 +665,16 @@ function resetFiltrosProductos() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                alert('Caja cerrada correctamente');
-                location.reload();
+                showAppModal('Caja cerrada correctamente', {
+                    variant: 'success',
+                    title: 'Caja cerrada',
+                    onConfirm: () => location.reload()
+                });
             } else {
-                alert('Error al cerrar caja: ' + data.message);
+                showAppModal('Error al cerrar caja: ' + data.message, {
+                    variant: 'danger',
+                    title: 'Error al cerrar caja'
+                });
             }
         });
     }
@@ -818,9 +842,15 @@ function resetFiltrosProductos() {
                     .then(data => {
                         if (data.status === 'ok') {
                             const tipoTexto = tipoImpresion === 'cocina' ? 'boleta de cocina' : 'boleta de cliente';
-                            alert(`${tipoTexto.charAt(0).toUpperCase() + tipoTexto.slice(1)} enviada a la impresora.`);
+                            showAppModal(`${tipoTexto.charAt(0).toUpperCase() + tipoTexto.slice(1)} enviada a la impresora.`, {
+                                variant: 'success',
+                                title: 'Impresión enviada'
+                            });
                         } else {
-                            alert("Error al imprimir: " + (data.message || ''));
+                            showAppModal("Error al imprimir: " + (data.message || ''), {
+                                variant: 'danger',
+                                title: 'Error al imprimir'
+                            });
                         }
 
                         // Limpiar variables
@@ -843,10 +873,16 @@ function resetFiltrosProductos() {
                         })
                         .then(response => {
                             if (response.ok) {
-                                alert("Comanda reabierta correctamente.");
-                                location.reload();
+                                showAppModal("Comanda reabierta correctamente.", {
+                                    variant: 'success',
+                                    title: 'Comanda reabierta',
+                                    onConfirm: () => location.reload()
+                                });
                             } else {
-                                alert("No se pudo reabrir la comanda.");
+                                showAppModal("No se pudo reabrir la comanda.", {
+                                    variant: 'danger',
+                                    title: 'Error al reabrir'
+                                });
                             }
                         });
                     }
@@ -854,12 +890,18 @@ function resetFiltrosProductos() {
                     comandaAReabrir = null;
                 }
             } else {
-                alert("Credenciales inválidas o no tiene permisos.");
+                showAppModal("Credenciales inválidas o no tiene permisos.", {
+                    variant: 'danger',
+                    title: 'Acceso denegado'
+                });
             }
         })
         .catch(error => {
             console.error("Error al verificar superusuario:", error);
-            alert("Error en la verificación.");
+            showAppModal("Error en la verificación.", {
+                variant: 'danger',
+                title: 'Error de verificación'
+            });
         });
     }
 
@@ -879,7 +921,10 @@ function resetFiltrosProductos() {
         const html = document.getElementById('detalleCerradaContenido').innerHTML;
         const match = html.match(/Comanda #(\d+)/);
         if (!match) {
-            alert("No se pudo obtener el ID de la comanda.");
+            showAppModal("No se pudo obtener el ID de la comanda.", {
+                variant: 'warning',
+                title: 'Sin ID disponible'
+            });
             return;
         }
 

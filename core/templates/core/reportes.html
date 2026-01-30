@@ -173,10 +173,16 @@ function imprimirVentasDia() {
     })
     .then(response => response.text())
     .then(msg => {
-        alert(msg); // Muestra mensaje de éxito
+        showAppModal(msg || "Ventas finales enviadas a impresión", {
+            variant: 'success',
+            title: 'Impresión en curso'
+        });
     })
     .catch(error => {
-        alert("Error al imprimir: " + error);
+        showAppModal("Error al imprimir: " + error, {
+            variant: 'danger',
+            title: 'Error al imprimir'
+        });
     });
 }
 </script>

@@ -24,13 +24,22 @@ async function verificarAdmin(event) {
 
         const data = await response.json();
         if (data.success) {
-            alert('Comandas eliminadas correctamente.');
-            location.reload();
+            showAppModal('Comandas eliminadas correctamente.', {
+                variant: 'success',
+                title: 'Acción completada',
+                onConfirm: () => location.reload()
+            });
         } else {
-            alert(data.error || 'Usuario o contraseña incorrectos.');
+            showAppModal(data.error || 'Usuario o contraseña incorrectos.', {
+                variant: 'danger',
+                title: 'Verificación fallida'
+            });
         }
     } catch (error) {
-        alert('Error al verificar administrador.');
+        showAppModal('Error al verificar administrador.', {
+            variant: 'danger',
+            title: 'Error de verificación'
+        });
     }
 
     cerrarModalAdmin();

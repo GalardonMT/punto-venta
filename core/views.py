@@ -951,35 +951,18 @@ def _get_available_years():
 
     return list(range(min_year, max_year + 1))
 
-def exportar_reportes_mes(request):
-    hoy = datetime.today()
-    año_actual = datetime.now().year
 
-    try:
-        mes = int(request.GET.get('mes', hoy.month))
-        año = int(request.GET.get('año', hoy.year))
-    except ValueError:
-        mes = hoy.month
-        año = hoy.year
-
-    if request.GET.get('exportar') != '1':
-        años = _get_available_years()
-        context = {
-            'meses': MESES_ES,
-            'años': años,
-            'mes_seleccionado': mes,
-            'año_seleccionado': año,
-            'mes_nombre': dict(MESES_ES).get(mes, mes),
-        }
-        return render(request, 'core/exportar_reportes_mes.html', context)
-
-    reportes = HistorialComanda.objects.filter(fecha__year=año, fecha__month=mes).order_by('fecha')
-
+def _build_excel_report(reportes, sheet_title, filename):
+    """Genera el Excel con el historial solicitado y lo retorna como respuesta HTTP."""
     wb = Workbook()
     ws = wb.active
-    ws.title = f"Reportes_{año}_{mes:02d}"
+    ws.title = sheet_title
 
-    encabezados = ['ID', 'Fecha', 'Empleado', 'Cliente', 'Método de pago', 'Monto efectivo', 'Monto tarjeta debito', 'Monto tarjeta credito', 'Monto transferencia','Tipo de servicio', 'Cerrado por', 'Total'] 
+    encabezados = [
+        'ID', 'Fecha', 'Empleado', 'Cliente', 'Método de pago',
+        'Monto efectivo', 'Monto tarjeta debito', 'Monto tarjeta credito',
+        'Monto transferencia', 'Tipo de servicio', 'Cerrado por', 'Total'
+    ]
     ws.append(encabezados)
 
     total_general = 0
@@ -1001,17 +984,15 @@ def exportar_reportes_mes(request):
         ws.append(fila)
         total_general += reporte.total or 0
 
-    ws.append([])  # fila vacía
+    ws.append([])
 
-    fila_total = ['','','','','','','','','Total General:', total_general]
+    relleno = [''] * (len(encabezados) - 2)
+    fila_total = [*relleno, 'Total General:', total_general]
     ws.append(fila_total)
 
     bold_font = Font(bold=True)
     for cell in ws[ws.max_row]:
         cell.font = bold_font
-
-    nombre_mes = dict(MESES_ES).get(mes, f"{mes:02d}")
-    filename = f"reportes_{nombre_mes}_{año}.xlsx"
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -1019,6 +1000,41 @@ def exportar_reportes_mes(request):
     response['Content-Disposition'] = f'attachment; filename={filename}'
     wb.save(response)
     return response
+
+def exportar_reportes_mes(request):
+    hoy = datetime.today()
+    exportar_mes = request.GET.get('exportar') == '1'
+    exportar_historico = request.GET.get('exportar_historico') == '1'
+
+    try:
+        mes = int(request.GET.get('mes', hoy.month))
+        año = int(request.GET.get('año', hoy.year))
+    except ValueError:
+        mes = hoy.month
+        año = hoy.year
+
+    if not exportar_mes and not exportar_historico:
+        años = _get_available_years()
+        context = {
+            'meses': MESES_ES,
+            'años': años,
+            'mes_seleccionado': mes,
+            'año_seleccionado': año,
+            'mes_nombre': dict(MESES_ES).get(mes, mes),
+            'dia_seleccionado': hoy.day,
+        }
+        return render(request, 'core/exportar_reportes_mes.html', context)
+
+    if exportar_historico:
+        reportes = HistorialComanda.objects.all().order_by('fecha')
+        timestamp = timezone.localtime(timezone.now()).strftime('%Y%m%d_%H%M')
+        filename = f"reportes_historico_{timestamp}.xlsx"
+        return _build_excel_report(reportes, 'Reportes_Historico', filename)
+
+    reportes = HistorialComanda.objects.filter(fecha__year=año, fecha__month=mes).order_by('fecha')
+    nombre_mes = dict(MESES_ES).get(mes, f"{mes:02d}")
+    filename = f"reportes_{nombre_mes}_{año}.xlsx"
+    return _build_excel_report(reportes, f"Reportes_{año}_{mes:02d}", filename)
 
 
 def exportar_reportes_anual(request):

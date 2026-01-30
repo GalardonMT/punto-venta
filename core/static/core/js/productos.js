@@ -120,7 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         } catch (error) {
             console.error(error);
-            alert('No se pudo actualizar el producto. Intenta nuevamente.');
+            showAppModal('No se pudo actualizar el producto. Intenta nuevamente.', {
+                variant: 'danger',
+                title: 'Error al actualizar producto'
+            });
         }
     };
 
