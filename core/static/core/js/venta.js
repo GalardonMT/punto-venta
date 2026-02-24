@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const botonBusqueda = document.getElementById('botonBuscarProductos');
     const editMetodoPago = document.getElementById('editMetodoPago');
     const selectCategoria = document.getElementById('selectorCategoriaRapida');
+    const inputBusquedaComanda = document.getElementById('busquedaComanda');
+    const botonLimpiarBusquedaComanda = document.getElementById('limpiarBusquedaComanda');
+    const botonesFiltro = document.querySelectorAll('[data-filtro-comanda]');
+    const AUTO_REFRESH_MS = 5000;
 
     if (editMetodoPago) {
         editMetodoPago.addEventListener('change', mostrarCamposPagoEdicion);
@@ -41,6 +45,43 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectCategoria) {
         selectCategoria.addEventListener('change', () => filtrarProductosPorCategoria(selectCategoria.value));
     }
+
+    if (botonesFiltro.length) {
+        botonesFiltro.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filtroSeleccionado = btn.dataset.filtroComanda;
+                filtroComandas = filtroComandas === filtroSeleccionado ? 'todos' : filtroSeleccionado;
+                actualizarEstadoFiltros();
+                renderizarComandas();
+            });
+        });
+    }
+
+    if (inputBusquedaComanda) {
+        inputBusquedaComanda.addEventListener('input', () => {
+            busquedaComandas = inputBusquedaComanda.value.trim().toLowerCase();
+            actualizarEstadoBusquedaComandas();
+            renderizarComandas();
+        });
+    }
+
+    if (botonLimpiarBusquedaComanda) {
+        botonLimpiarBusquedaComanda.addEventListener('click', () => {
+            busquedaComandas = '';
+            if (inputBusquedaComanda) {
+                inputBusquedaComanda.value = '';
+                inputBusquedaComanda.focus();
+            }
+            actualizarEstadoBusquedaComandas();
+            renderizarComandas();
+        });
+    }
+
+    actualizarEstadoFiltros();
+    actualizarEstadoBusquedaComandas();
+
+    actualizarComandas();
+    setInterval(actualizarComandas, AUTO_REFRESH_MS);
 });
 
 function mostrarProducto(elemento) {
@@ -96,6 +137,10 @@ function resetFiltrosProductos() {
     mostrarTodosLosProductos();
 }
 
+    const FILTROS_SERVICIO = ['delivery', 'servir', 'reserva'];
+    let filtroComandas = 'todos';
+    let busquedaComandas = '';
+    let comandasCache = [];
     let productosSeleccionados = [];
     let total = 0;
     let estadoInicialNota = "";
@@ -521,45 +566,151 @@ function resetFiltrosProductos() {
         })
         .then(data => {
             console.log('Comandas obtenidas:', data);
-            
-            const abiertas = document.querySelectorAll('.contenedor-burbujas')[0];
-            const cerradas = document.querySelectorAll('.contenedor-burbujas')[1];
-
-            if (!abiertas || !cerradas) {
-                console.error('No se encontraron los contenedores de comandas');
-                return;
-            }
-
-            abiertas.innerHTML = '';
-            cerradas.innerHTML = '';
-
-            data.comandas.forEach(comanda => {
-                const burbuja = document.createElement('div');
-                burbuja.className = 'burbuja';
-                burbuja.setAttribute('data-id', comanda.id);
-
-                burbuja.innerHTML = `
-                    <div class="estado ${comanda.estado === 'cerrada' ? 'estado-pagado' : 'estado-pendiente'}">
-                        ${comanda.estado === 'cerrada' ? 'Pagado' : 'Pendiente'}
-                    </div>
-                    <div>Cliente: ${comanda.cliente}</div>
-                    <div class="numero-comanda">#${comanda.id}</div>
-                `;
-
-                if (comanda.estado === 'abierta') {
-                    burbuja.onclick = () => abrirEdicionComanda(comanda.id);
-                    abiertas.appendChild(burbuja);
-                } else {
-                    burbuja.onclick = () => abrirDetalleCerrada(comanda.id, comanda.es_historial);
-                    cerradas.appendChild(burbuja);
-                }
-            });
-            
-            console.log('Lista de comandas actualizada correctamente');
+            comandasCache = Array.isArray(data.comandas) ? data.comandas : [];
+            renderizarComandas();
         })
         .catch(error => {
             console.error('Error al actualizar comandas:', error);
         });
+    }
+
+    function renderizarComandas() {
+        const contenedorAbiertas = document.getElementById('listaComandasAbiertas');
+        const contenedorCerradas = document.getElementById('listaComandasCerradas');
+        const seccionAbiertas = document.getElementById('comandasAbiertas');
+        const seccionCerradas = document.getElementById('comandasCerradas');
+
+        if (!contenedorAbiertas || !contenedorCerradas) {
+            console.error('No se encontraron los contenedores de comandas');
+            return;
+        }
+
+        contenedorAbiertas.innerHTML = '';
+        contenedorCerradas.innerHTML = '';
+
+        const abiertas = comandasCache.filter(comanda => comanda.estado === 'abierta');
+        const cerradas = comandasCache.filter(comanda => comanda.estado === 'cerrada');
+        const mostrarSoloCerradas = filtroComandas === 'cerradas';
+
+        let abiertasFiltradas = abiertas;
+        if (FILTROS_SERVICIO.includes(filtroComandas)) {
+            abiertasFiltradas = abiertas.filter(comanda => {
+                const tipoServicioRaw = comanda.tipo_servicio || comanda.tipoServicio || '';
+                const tipoServicio = normalizarTipoServicio(tipoServicioRaw);
+                return tipoServicio === filtroComandas;
+            });
+        }
+
+        if (busquedaComandas) {
+            abiertasFiltradas = abiertasFiltradas.filter(comanda => cumpleBusquedaComanda(comanda, busquedaComandas));
+        }
+
+        let cerradasFiltradas = cerradas;
+        if (busquedaComandas) {
+            cerradasFiltradas = cerradasFiltradas.filter(comanda => cumpleBusquedaComanda(comanda, busquedaComandas));
+        }
+
+        if (mostrarSoloCerradas) {
+            if (!cerradasFiltradas.length) {
+                contenedorCerradas.appendChild(crearMensajeVacio('No hay comandas cerradas.'));
+            } else {
+                cerradasFiltradas.forEach(comanda => {
+                    const burbujaCerrada = crearBurbujaComanda(comanda);
+                    burbujaCerrada.onclick = () => abrirDetalleCerrada(comanda.id, comanda.es_historial);
+                    contenedorCerradas.appendChild(burbujaCerrada);
+                });
+            }
+        } else {
+            if (!abiertasFiltradas.length) {
+                contenedorAbiertas.appendChild(crearMensajeVacio('No hay comandas para este filtro.'));
+            } else {
+                abiertasFiltradas.forEach(comanda => {
+                    const burbujaAbierta = crearBurbujaComanda(comanda);
+                    burbujaAbierta.onclick = () => abrirEdicionComanda(comanda.id);
+                    contenedorAbiertas.appendChild(burbujaAbierta);
+                });
+            }
+        }
+
+        if (seccionAbiertas) {
+            seccionAbiertas.style.display = mostrarSoloCerradas ? 'none' : 'block';
+        }
+        if (seccionCerradas) {
+            seccionCerradas.style.display = mostrarSoloCerradas ? 'block' : 'none';
+        }
+    }
+
+    function crearBurbujaComanda(comanda) {
+        const burbuja = document.createElement('div');
+        burbuja.className = 'burbuja';
+        burbuja.setAttribute('data-id', comanda.id);
+
+        const esCerrada = comanda.estado === 'cerrada';
+        const nombreCliente = comanda.cliente || comanda.nombre_cliente || 'No asignado';
+        const tipoServicioRaw = comanda.tipo_servicio || comanda.tipoServicio || 'servir';
+        const tipoServicio = normalizarTipoServicio(tipoServicioRaw);
+        const etiquetaServicio = obtenerEtiquetaTipoServicio(tipoServicio);
+
+        burbuja.innerHTML = `
+            <div class="estado ${esCerrada ? 'estado-pagado' : 'estado-pendiente'}">
+                ${esCerrada ? 'Pagado' : 'Pendiente'}
+            </div>
+            <div>Cliente: ${nombreCliente}</div>
+            <div class="tipo-servicio-comanda">Servicio: ${etiquetaServicio}</div>
+            <div class="numero-comanda">#${comanda.id}</div>
+        `;
+
+        return burbuja;
+    }
+
+    function crearMensajeVacio(texto) {
+        const mensaje = document.createElement('div');
+        mensaje.className = 'mensaje-vacio';
+        mensaje.textContent = texto;
+        return mensaje;
+    }
+
+    function actualizarEstadoFiltros() {
+        document.querySelectorAll('[data-filtro-comanda]').forEach(btn => {
+            const esActivo = filtroComandas === btn.dataset.filtroComanda;
+            btn.classList.toggle('activo', esActivo);
+            btn.setAttribute('aria-pressed', esActivo ? 'true' : 'false');
+        });
+    }
+
+    function actualizarEstadoBusquedaComandas() {
+        const botonLimpiar = document.getElementById('limpiarBusquedaComanda');
+        if (botonLimpiar) {
+            botonLimpiar.disabled = !busquedaComandas;
+        }
+    }
+
+    function cumpleBusquedaComanda(comanda, termino) {
+        const cliente = String(comanda.cliente || comanda.nombre_cliente || '').toLowerCase();
+        const numeroPedido = String(comanda.id || '').toLowerCase();
+        const terminoLimpio = termino.replace('#', '');
+
+        return cliente.includes(termino) || numeroPedido.includes(termino) || numeroPedido.includes(terminoLimpio);
+    }
+
+    function normalizarTipoServicio(valor) {
+        const normalizado = String(valor || '').trim().toLowerCase();
+        if (normalizado === 'servir en local' || normalizado === 'servir en mesa') {
+            return 'servir';
+        }
+        if (normalizado === 'delivery') {
+            return 'delivery';
+        }
+        if (normalizado === 'reserva') {
+            return 'reserva';
+        }
+        return normalizado;
+    }
+
+    function obtenerEtiquetaTipoServicio(tipoServicio) {
+        if (tipoServicio === 'delivery') return 'Delivery';
+        if (tipoServicio === 'reserva') return 'Reserva';
+        return 'En local';
     }
 
 
@@ -613,7 +764,7 @@ function resetFiltrosProductos() {
     }
     
     function mostrarModalCerrarCaja() {
-        document.getElementById('modalCerrarCaja').style.display = 'block';
+        document.getElementById('modalCerrarCaja').style.display = 'flex';
     }
 
     function cerrarModalCerrarCaja() {
@@ -863,29 +1014,27 @@ function resetFiltrosProductos() {
 
                 // Si no es impresión, es reabrir comanda
                 if (comandaAReabrir !== null) {
-                    if (confirm("¿Estás seguro de que deseas reabrir esta comanda?")) {
-                        fetch(`/reabrir-comanda/${comandaAReabrir}/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCSRFToken(),
-                            }
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                showAppModal("Comanda reabierta correctamente.", {
-                                    variant: 'success',
-                                    title: 'Comanda reabierta',
-                                    onConfirm: () => location.reload()
-                                });
-                            } else {
-                                showAppModal("No se pudo reabrir la comanda.", {
-                                    variant: 'danger',
-                                    title: 'Error al reabrir'
-                                });
-                            }
-                        });
-                    }
+                    fetch(`/reabrir-comanda/${comandaAReabrir}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken(),
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            showAppModal("Comanda reabierta correctamente.", {
+                                variant: 'success',
+                                title: 'Comanda reabierta',
+                                onConfirm: () => location.reload()
+                            });
+                        } else {
+                            showAppModal("No se pudo reabrir la comanda.", {
+                                variant: 'danger',
+                                title: 'Error al reabrir'
+                            });
+                        }
+                    });
 
                     comandaAReabrir = null;
                 }

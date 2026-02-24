@@ -142,7 +142,15 @@
 
 
 <body>
-    <div class="sidebar">
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="appSidebar">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <div class="sidebar-overlay" id="menuOverlay"></div>
+
+    <div id="appSidebar" class="sidebar">
         <h1>Punto de Venta</h1>
         
         {% with current_url=request.resolver_match.url_name %}
@@ -189,6 +197,39 @@
             </div>
         </div>
     </div>
+    <script>
+        // Controla la apertura y cierre del menú hamburguesa
+        (function () {
+            const body = document.body;
+            const toggle = document.getElementById('menuToggle');
+            const overlay = document.getElementById('menuOverlay');
+            const sidebar = document.getElementById('appSidebar');
+            if (!toggle || !overlay || !sidebar) {
+                return;
+            }
+
+            const navLinks = document.querySelectorAll('.nav-buttons a');
+
+            const setMenuState = (open) => {
+                body.classList.toggle('sidebar-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            };
+
+            toggle.addEventListener('click', () => {
+                const open = body.classList.contains('sidebar-open');
+                setMenuState(!open);
+            });
+
+            overlay.addEventListener('click', () => setMenuState(false));
+            navLinks.forEach((link) => link.addEventListener('click', () => setMenuState(false)));
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 1200) {
+                    setMenuState(false);
+                }
+            });
+        })();
+    </script>
 </body>
 
 <script>

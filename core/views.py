@@ -669,6 +669,7 @@ def comandas_json(request):
         'id': c.id,
         'cliente': c.nombre_cliente or 'No asignado',
         'estado': c.estado,
+        'tipo_servicio': c.tipo_servicio,
         'es_historial': False,
     } for c in comandas]
     return JsonResponse({'comandas': data})

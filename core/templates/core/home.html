@@ -40,11 +40,32 @@
         </div>
 
         <div class="quick-actions">
-            <h4>Accesos rápidos:</h4>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                <a href="{% url 'venta' %}" class="btn btn-primary">+ Nueva Comanda</a>
-                <a href="{% url 'productos' %}" class="btn btn-secondary">Gestionar Productos</a>
-                <a href="{% url 'reportes' %}" class="btn btn-success">Reportes</a>
+            <div class="quick-actions-header">
+                <h4>Accesos rápidos:</h4>
+                <p>Atajos diarios para que todo fluya sin salir del panel.</p>
+            </div>
+            <div class="action-grid">
+                <a href="{% url 'venta' %}" class="action-card action-card--venta">
+                    <span class="action-icon">🧾</span>
+                    <div class="action-copy">
+                        <span class="action-title">+ Nueva Comanda</span>
+                        <span class="action-desc">Levanta pedidos al instante y sigue vendiendo.</span>
+                    </div>
+                </a>
+                <a href="{% url 'productos' %}" class="action-card action-card--productos">
+                    <span class="action-icon">🍰</span>
+                    <div class="action-copy">
+                        <span class="action-title">Gestionar Productos</span>
+                        <span class="action-desc">Actualiza precios, fotos o stock en segundos.</span>
+                    </div>
+                </a>
+                <a href="{% url 'reportes' %}" class="action-card action-card--reportes">
+                    <span class="action-icon">📊</span>
+                    <div class="action-copy">
+                        <span class="action-title">Reportes</span>
+                        <span class="action-desc">Visualiza ventas y tendencias del día.</span>
+                    </div>
+                </a>
             </div>
         </div>
 

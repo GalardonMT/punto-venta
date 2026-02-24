@@ -70,35 +70,64 @@
 
 <!-- Modal de detalle -->
 <div id="modalDetalleEliminada" class="modal">
-    <div class="modal-contenido">
-        <span class="cerrar" onclick="cerrarModalDetalle()">&times;</span>
-        <h3>Detalle de Comanda Eliminada</h3>
-        <p><strong>ID:</strong> <span id="detalleId"></span></p>
-        <p><strong>Cliente:</strong> <span id="detalleCliente"></span></p>
-        <p><strong>Total:</strong> $<span id="detalleTotal"></span></p>
-        <p><strong>Motivo:</strong> <span id="detalleMotivo"></span></p>
-        <p><strong>Eliminado por:</strong> <span id="detalleEmpleado"></span></p>
-        <p><strong>Fecha:</strong> <span id="detalleFecha"></span></p>
+    <div class="detail-modal">
+        <button type="button" class="modal-close" aria-label="Cerrar detalle" onclick="cerrarModalDetalle()">&times;</button>
+        <div class="detail-modal__header">
+            <p class="detail-eyebrow">Registro eliminado</p>
+            <h3>Comanda <span id="detalleId"></span></h3>
+            <p class="detail-date">Eliminada el <span id="detalleFecha"></span></p>
+        </div>
+
+        <div class="detail-modal__body">
+            <div class="detail-stat-grid">
+                <div class="detail-stat">
+                    <p class="detail-stat__label">Cliente</p>
+                    <p class="detail-stat__value" id="detalleCliente"></p>
+                </div>
+                <div class="detail-stat">
+                    <p class="detail-stat__label">Total eliminado</p>
+                    <p class="detail-stat__value">$<span id="detalleTotal"></span></p>
+                </div>
+                <div class="detail-stat">
+                    <p class="detail-stat__label">Eliminado por</p>
+                    <p class="detail-stat__value" id="detalleEmpleado"></p>
+                </div>
+            </div>
+
+            <div class="detail-note">
+                <p class="detail-stat__label">Motivo registrado</p>
+                <p class="detail-note__value" id="detalleMotivo"></p>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Modal de verificación admin -->
 <div id="modalVerificacionAdmin" class="modal">
-  <div class="modal-contenido">
-    <span class="cerrar" onclick="cerrarModalAdmin()">&times;</span>
-    <h3>Verificación de administrador</h3>
-    <form id="formVerificacionAdmin" onsubmit="verificarAdmin(event)">
-      <div class="form-group">
-        <label for="adminUsuario">Usuario</label>
-        <input type="text" id="adminUsuario" name="adminUsuario" required>
-      </div>
-      <div class="form-group">
-        <label for="adminPass">Contraseña</label>
-        <input type="password" id="adminPass" name="adminPass" required>
-      </div>
-      <button type="submit" class="boton-modal rojo">Confirmar</button>
-    </form>
-  </div>
+    <div class="modal-panel modal-panel--danger">
+        <button type="button" class="modal-close" aria-label="Cerrar verificación" onclick="cerrarModalAdmin()">&times;</button>
+        <div class="modal-panel__header">
+            <p class="detail-eyebrow">Verificación requerida</p>
+            <h3>Confirmar limpieza total</h3>
+            <p class="modal-panel__description">Ingresa credenciales de administrador para eliminar definitivamente las comandas.</p>
+        </div>
+
+        <form id="formVerificacionAdmin" class="modal-panel__body" onsubmit="verificarAdmin(event)">
+            <div class="form-group modal-field">
+                <label for="adminUsuario">Usuario administrador</label>
+                <input type="text" id="adminUsuario" name="adminUsuario" required autocomplete="off">
+            </div>
+            <div class="form-group modal-field">
+                <label for="adminPass">Contraseña</label>
+                <input type="password" id="adminPass" name="adminPass" required autocomplete="off">
+            </div>
+            <div id="errorVerificacion" class="modal-error"></div>
+            <div class="modal-panel__actions">
+                <button type="button" class="modal-btn modal-btn--ghost" onclick="cerrarModalAdmin()">Cancelar</button>
+                <button type="submit" class="modal-btn modal-btn--danger">Eliminar registros</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 

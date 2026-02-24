@@ -25,24 +25,32 @@
 
             <!-- Modal para verificación de superusuario al cerrar caja -->
             <div id="modalCerrarCaja" class="modal">
-                <div class="modal-contenido">
-                    <span class="cerrar" onclick="cerrarModalCerrarCaja()">&times;</span>
-                    <h3>Verificación de Administrador</h3>
-                    <p>Ingrese credenciales para cerrar la caja:</p>
-
-                    <div class="form-group">
-                        <label for="adminCierre">Nombre Administrador:</label>
-                        <input type="text" id="adminCierre">
+                <div class="modal-panel modal-panel--danger">
+                    <button type="button" class="modal-close" aria-label="Cerrar modal" onclick="cerrarModalCerrarCaja()">&times;</button>
+                    <div class="modal-panel__header">
+                        <p class="modal-panel__eyebrow">Control de caja</p>
+                        <h3>Verificación de administrador</h3>
+                        <p class="modal-panel__description">Solo un administrador autorizado puede cerrar la caja diaria.</p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="passCierre">Contraseña:</label>
-                        <input type="password" id="passCierre">
+                    <div class="modal-panel__body">
+                        <div class="form-group modal-field">
+                            <label for="adminCierre">Usuario administrador</label>
+                            <input type="text" id="adminCierre" autocomplete="off">
+                        </div>
+
+                        <div class="form-group modal-field">
+                            <label for="passCierre">Contraseña</label>
+                            <input type="password" id="passCierre" autocomplete="off">
+                        </div>
+
+                        <div id="mensaje-error-cierre" class="modal-error"></div>
                     </div>
 
-                    <div id="mensaje-error-cierre" class="mensaje-error" style="display:none;"></div>
-
-                    <button onclick="verificarYConfirmarCierre()" class="boton-agregar">Verificar y Cerrar Caja</button>
+                    <div class="modal-panel__actions">
+                        <button type="button" class="modal-btn modal-btn--ghost" onclick="cerrarModalCerrarCaja()">Cancelar</button>
+                        <button type="button" class="modal-btn modal-btn--danger" onclick="verificarYConfirmarCierre()">Cerrar caja</button>
+                    </div>
                 </div>
             </div>
 
@@ -55,41 +63,80 @@
 
             <!-- Modal Verificar y Eliminar Comanda -->
             <div id="modalEliminarComanda" class="modal">
-                <div class="modal-eliminar">
-                    <span class="cerrar" onclick="cerrarModalEliminar()">&times;</span>
-                    <h3>Verificación de Administrador</h3>
-                    <p>Ingrese credenciales para eliminar la comanda:</p>
-
-                    <div class="form-group">
-                        <label for="adminEliminar">Usuario Administrador:</label>
-                        <input type="text" id="adminEliminar" autocomplete="off">
+                <div class="modal-panel modal-panel--danger">
+                    <button type="button" class="modal-close" aria-label="Cerrar modal" onclick="cerrarModalEliminar()">&times;</button>
+                    <div class="modal-panel__header">
+                        <p class="modal-panel__eyebrow">Control administrativo</p>
+                        <h3>Eliminar comanda</h3>
+                        <p class="modal-panel__description">Confirma tu identidad y registra el motivo para eliminar esta orden.</p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="passEliminar">Contraseña:</label>
-                        <input type="password" id="passEliminar" autocomplete="off">
+                    <div class="modal-panel__body">
+                        <div class="form-group modal-field">
+                            <label for="adminEliminar">Usuario administrador</label>
+                            <input type="text" id="adminEliminar" autocomplete="off">
+                        </div>
+
+                        <div class="form-group modal-field">
+                            <label for="passEliminar">Contraseña</label>
+                            <input type="password" id="passEliminar" autocomplete="off">
+                        </div>
+
+                        <div class="form-group modal-field">
+                            <label for="motivoEliminar">Motivo de eliminación</label>
+                            <textarea id="motivoEliminar" rows="3" placeholder="Ej: Error al ingresar la orden"></textarea>
+                        </div>
+
+                        <div id="errorEliminar" class="modal-error"></div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="motivoEliminar">Motivo de eliminación:</label>
-                        <textarea id="motivoEliminar" rows="3" placeholder="Ej: Error al ingresar la orden"></textarea>
+                    <div class="modal-panel__actions">
+                        <button type="button" class="modal-btn modal-btn--ghost" onclick="cerrarModalEliminar()">Cancelar</button>
+                        <button type="button" class="modal-btn modal-btn--danger" onclick="verificarYEliminarComanda()">Eliminar comanda</button>
                     </div>
-
-                    <div id="errorEliminar" class="mensaje-error" style="display: none;"></div>
-
-                    <button onclick="verificarYEliminarComanda()">Verificar y Eliminar</button>
                 </div>
             </div>
 
             <div class="venta-panel">
-                <div class="seccion-comandas">
+                <div class="filtros-comandas" aria-label="Filtrar comandas">
+                    <div class="busqueda-comandas">
+                        <input
+                            type="text"
+                            id="busquedaComanda"
+                            placeholder="Buscar cliente o # pedido"
+                            aria-label="Buscar cliente o número de pedido"
+                        >
+                        <button type="button" id="limpiarBusquedaComanda" class="btn-limpiar-busqueda" aria-label="Limpiar búsqueda">&times;</button>
+                    </div>
+
+                    <div class="filtros-comandas-botones" role="group" aria-label="Botones de filtro">
+                        <button type="button" class="filtro-btn" data-filtro-comanda="todos">Todas</button>
+                        <button type="button" class="filtro-btn" data-filtro-comanda="delivery">Delivery</button>
+                        <button type="button" class="filtro-btn" data-filtro-comanda="servir">Servir en mesa</button>
+                        <button type="button" class="filtro-btn" data-filtro-comanda="reserva">Reservas</button>
+                        <button type="button" class="filtro-btn" data-filtro-comanda="cerradas">Comandas cerradas</button>
+                    </div>
+                </div>
+
+                <div class="seccion-comandas" id="comandasAbiertas">
                     <div class="titulo"> Comandas Abiertas</div>
-                    <div class="contenedor-burbujas">
+                    <div class="contenedor-burbujas" id="listaComandasAbiertas">
                         {% for comanda in comandas %}
                             {% if comanda.estado == 'abierta' %}
                                 <div class="burbuja" data-id="{{ comanda.id }}" onclick="abrirEdicionComanda('{{ comanda.id }}')">
                                     <div class="estado estado-pendiente">Pendiente</div>
                                     <div>Cliente: {{ comanda.nombre_cliente }}</div>
+                                    <div class="tipo-servicio-comanda">
+                                        {% if comanda.tipo_servicio == 'servir' %}
+                                            Servicio: En local
+                                        {% elif comanda.tipo_servicio == 'delivery' %}
+                                            Servicio: Delivery
+                                        {% elif comanda.tipo_servicio == 'reserva' %}
+                                            Servicio: Reserva
+                                        {% else %}
+                                            Servicio: En local
+                                        {% endif %}
+                                    </div>
                                     <div class="numero-comanda">#{{ comanda.id }}</div>
                                 </div>
                             {% endif %}
@@ -97,14 +144,25 @@
                     </div>
                 </div>
 
-                <div class="seccion-comandas">
+                <div class="seccion-comandas seccion-comandas--cerradas" id="comandasCerradas">
                     <div class="titulo"> Comandas Cerradas</div>
-                    <div class="contenedor-burbujas">
+                    <div class="contenedor-burbujas" id="listaComandasCerradas">
                         {% for comanda in comandas %}
                             {% if comanda.estado == 'cerrada' %}
                                 <div class="burbuja" data-id="{{ comanda.id }}" onclick="abrirDetalleCerrada('{{ comanda.id }}')">
                                     <div class="estado estado-pagado">Pagado</div>
                                     <div>Cliente: {{ comanda.nombre_cliente|default:"No asignado" }}</div>
+                                    <div class="tipo-servicio-comanda">
+                                        {% if comanda.tipo_servicio == 'servir' %}
+                                            Servicio: En local
+                                        {% elif comanda.tipo_servicio == 'delivery' %}
+                                            Servicio: Delivery
+                                        {% elif comanda.tipo_servicio == 'reserva' %}
+                                            Servicio: Reserva
+                                        {% else %}
+                                            Servicio: En local
+                                        {% endif %}
+                                    </div>
                                     <div class="numero-comanda">#{{ comanda.id }}</div>
                                 </div>
                             {% endif %}
@@ -231,26 +289,29 @@
 
     <!-- Modal de Superusuario (fuera de JS y del detalle dinámico) -->
     <div id="modalSuperAdmin" class="modal">
-        <div class="modal-contenido">
-            <span class="cerrar" onclick="cerrarModalSuperAdmin()">&times;</span>
-            <h3>Verificación de Administrador</h3>
-            <p>Ingrese credenciales para cerrar la caja:</p>
-
-            <div class="form-group">
-                <label for="adminCierre">Nombre Administrador:</label>
-                <input type="text" id="usernameSuperAdmin" placeholder="Usuario" >
+        <div class="modal-panel modal-panel--danger">
+            <button type="button" class="modal-close" aria-label="Cerrar modal" onclick="cerrarModalSuperAdmin()">&times;</button>
+            <div class="modal-panel__header">
+                <p class="modal-panel__eyebrow">Acceso restringido</p>
+                <h3>Verificación de administrador</h3>
+                <p class="modal-panel__description">Confirma tus credenciales antes de reabrir comandas o imprimir documentos sensibles.</p>
             </div>
 
-            <div class="form-group">
-                <label for="passCierre">Contraseña:</label>
-                <input type="password" id="passwordSuperAdmin" placeholder="Contraseña">
+            <div class="modal-panel__body">
+                <div class="form-group modal-field">
+                    <label for="usernameSuperAdmin">Usuario administrador</label>
+                    <input type="text" id="usernameSuperAdmin" placeholder="Ej: supervisor" autocomplete="off">
+                </div>
+
+                <div class="form-group modal-field">
+                    <label for="passwordSuperAdmin">Contraseña</label>
+                    <input type="password" id="passwordSuperAdmin" placeholder="Ingresa tu contraseña" autocomplete="off">
+                </div>
             </div>
 
-            <div id="mensaje-error-cierre" class="mensaje-error" style="display:none;"></div>
-
-            <div style="display:flex; justify-content:space-between;">
-                <button onclick="confirmarSuperadmin()" class="boton-agregar">Confirmar</button>
-                <button onclick="cerrarModalSuperAdmin()" class="boton-agregar" style="background-color: #dc3545;" >Cancelar</button>
+            <div class="modal-panel__actions">
+                <button type="button" class="modal-btn modal-btn--ghost" onclick="cerrarModalSuperAdmin()">Cancelar</button>
+                <button type="button" class="modal-btn modal-btn--primary" onclick="confirmarSuperadmin()">Confirmar</button>
             </div>
         </div>
     </div>
