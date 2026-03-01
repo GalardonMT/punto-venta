@@ -573,6 +573,41 @@
     background-color: #fff;
 }
 
+.detalle-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.detalle-item-acciones {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-nota-producto {
+    border: 1px solid #b7c7d4;
+    background: #f6fbff;
+    color: #23445e;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-nota-producto:hover {
+    background: #eaf5ff;
+}
+
+.detalle-item-nota {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #475569;
+    opacity: 0.85;
+}
+
 .productos-burbuja {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

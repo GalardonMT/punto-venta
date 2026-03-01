@@ -144,6 +144,7 @@ function resetFiltrosProductos() {
     let productosSeleccionados = [];
     let total = 0;
     let estadoInicialNota = "";
+    let detalleCounter = 0; // Identificador único por ítem en el detalle
 
     function abrirModal() { 
         console.log("abrirModal: Iniciando apertura de modal");
@@ -164,8 +165,9 @@ function resetFiltrosProductos() {
         // Oculta campos
         document.getElementById('pago_mixto_campos').style.display = 'none';
 
-        // Reinicia productos seleccionados y total
+        // Reinicia productos seleccionados, contador y total
         productosSeleccionados = [];
+        detalleCounter = 0;
         total = 0;
         actualizarDetalle();
 
@@ -201,8 +203,9 @@ function resetFiltrosProductos() {
         document.getElementById('cliente').value = '';
         document.getElementById('notaComanda').value = '';
         
-        // Limpiar productos seleccionados y total
+        // Limpiar productos seleccionados, contador y total
         productosSeleccionados = [];
+        detalleCounter = 0;
         total = 0;
         actualizarDetalle();
         
@@ -223,16 +226,21 @@ function resetFiltrosProductos() {
 
         productosSeleccionados.forEach(item => {
             const li = document.createElement('li');
+            const notaProducto = (item.nota || '').trim();
             li.innerHTML = `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
+                <div class="detalle-item-row">
+                    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
                         <img src="${item.imagen}" alt="${item.nombre}" style="width:40px; height:40px; border-radius:5px;">
                         <div>
                             <strong>${item.nombre}</strong><br>
                             x${item.cantidad} - $${item.subtotal}
+                            ${notaProducto ? `<div class="detalle-item-nota">Nota: ${escapeHtml(notaProducto)}</div>` : ''}
                         </div>
                     </div>
-                    <button class="btn-eliminar-producto" data-id="${item.productoId}" style="color: red;">❌</button>
+                    <div class="detalle-item-acciones">
+                        <button type="button" class="btn-nota-producto" data-detalle-id="${item.detalleId}">${notaProducto ? 'Nota ✓' : 'Nota'}</button>
+                        <button type="button" class="btn-eliminar-producto" data-detalle-id="${item.detalleId}" style="color: red;">❌</button>
+                    </div>
                 </div>
             `;
             detalle.appendChild(li);
@@ -241,31 +249,65 @@ function resetFiltrosProductos() {
 
         document.getElementById('total').textContent = total;
 
-        // Asigna evento a cada botón X
+        // Asigna evento a cada botón de eliminar
         document.querySelectorAll('.btn-eliminar-producto').forEach(btn => {
             btn.addEventListener('click', function () {
-                const id = this.getAttribute('data-id');
-                eliminarProductoDetalle(id);
+                const detalleId = this.getAttribute('data-detalle-id');
+                eliminarProductoDetalle(detalleId);
+            });
+        });
+
+        // Asigna evento a cada botón de nota
+        document.querySelectorAll('.btn-nota-producto').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const detalleId = this.getAttribute('data-detalle-id');
+                editarNotaProducto(detalleId);
             });
         });
     }
 
-
-    function eliminarProductoDetalle(productoId) {
-        const index = productosSeleccionados.findIndex(p => String(p.productoId) === String(productoId));
+    function eliminarProductoDetalle(detalleId) {
+        const index = productosSeleccionados.findIndex(p => String(p.detalleId) === String(detalleId));
 
         if (index !== -1) {
-            const precioUnitario = productosSeleccionados[index].subtotal / productosSeleccionados[index].cantidad;
+            const item = productosSeleccionados[index];
 
-            if (productosSeleccionados[index].cantidad > 1) {
-                productosSeleccionados[index].cantidad -= 1;
-                productosSeleccionados[index].subtotal = productosSeleccionados[index].cantidad * precioUnitario;
+            // Si viene desde una comanda existente con cantidad > 1, mantenemos el comportamiento de restar 1
+            if (item.cantidad > 1) {
+                const precioUnitario = item.subtotal / item.cantidad;
+                item.cantidad -= 1;
+                item.subtotal = item.cantidad * precioUnitario;
             } else {
-                productosSeleccionados.splice(index, 1); // Elimina del array
+                // Para ítems nuevos (cantidad 1) simplemente eliminamos la línea
+                productosSeleccionados.splice(index, 1);
             }
 
             actualizarDetalle();
         }
+    }
+
+    let productoNotaEditandoId = null;
+
+    function editarNotaProducto(detalleId) {
+        const index = productosSeleccionados.findIndex(p => String(p.detalleId) === String(detalleId));
+        if (index === -1) return;
+
+        productoNotaEditandoId = String(detalleId);
+
+        const producto = productosSeleccionados[index];
+        const modal = document.getElementById('modalNotaProducto');
+        const nombreEl = document.getElementById('notaProductoNombre');
+        const textarea = document.getElementById('notaProductoTexto');
+
+        if (!modal || !nombreEl || !textarea) return;
+
+        nombreEl.textContent = producto.nombre || '';
+        textarea.value = producto.nota || '';
+
+        // Guardamos el identificador de detalle en el modal
+        modal.dataset.productoId = productoNotaEditandoId;
+        modal.style.display = 'flex';
+        textarea.focus();
     }
 
 
@@ -277,23 +319,17 @@ function resetFiltrosProductos() {
             const precio = parseFloat(burbuja.getAttribute('data-precio'));
             const imgSrc = burbuja.querySelector('img')?.src || '';
 
-            // Busca si el producto ya está en la lista
-            const productoExistente = productosSeleccionados.find(p => p.productoId === id);
-            
-            if (productoExistente) {
-                // Si existe, aumenta la cantidad
-                productoExistente.cantidad += 1;
-                productoExistente.subtotal = productoExistente.cantidad * precio;
-            } else {
-                // Si no existe, lo agrega
-                productosSeleccionados.push({
-                    productoId: id.toString(),
-                    nombre: nombre,
-                    cantidad: 1,
-                    subtotal: precio,
-                    imagen: imgSrc
-                });
-            }
+            // Siempre agregamos una nueva línea en el detalle para cada clic
+            detalleCounter += 1;
+            productosSeleccionados.push({
+                detalleId: detalleCounter.toString(),
+                productoId: id.toString(),
+                nombre: nombre,
+                cantidad: 1,
+                subtotal: precio,
+                imagen: imgSrc,
+                nota: ''
+            });
 
             actualizarDetalle();
         });
@@ -444,17 +480,20 @@ function resetFiltrosProductos() {
 
             // Rellena productos
             productosSeleccionados = [];
+            detalleCounter = 0;
 
             (data.detalles || []).forEach(item => {
                 // Si no hay imagen o es null/undefined, usar imagen por defecto
                 const imagenProducto = item.imagen || (window.defaultImageUrl || '/static/core/img/default.jpg');
                 
                 productosSeleccionados.push({
+                    detalleId: (++detalleCounter).toString(),
                     productoId: String(item.producto_id),
                     nombre: item.producto,
                     cantidad: item.cantidad,
                     subtotal: item.subtotal,
-                    imagen: imagenProducto 
+                    imagen: imagenProducto,
+                    nota: item.nota || ''
                 });
             });
             actualizarDetalle();
@@ -913,7 +952,10 @@ function resetFiltrosProductos() {
                                 <tbody>
                                     ${(data.detalles || []).map(item => `
                                         <tr>
-                                            <td>${item.producto || ''}</td>
+                                            <td>
+                                                ${item.producto || ''}
+                                                ${item.nota ? `<div class="detalle-item-nota">Nota: ${escapeHtml(item.nota)}</div>` : ''}
+                                            </td>
                                             <td>${item.cantidad}</td>
                                             <td>$${item.subtotal}</td>
                                         </tr>`).join('')}
@@ -1082,4 +1124,48 @@ function resetFiltrosProductos() {
 
         document.getElementById("modalDetalleCerrada").style.display = "none";
         document.getElementById("modalSuperAdmin").style.display = "flex";
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function cerrarModalNotaProducto() {
+        const modal = document.getElementById('modalNotaProducto');
+        const textarea = document.getElementById('notaProductoTexto');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.dataset.productoId = '';
+        }
+        if (textarea) {
+            textarea.value = '';
+        }
+        productoNotaEditandoId = null;
+    }
+
+    function guardarNotaProductoModal() {
+        const modal = document.getElementById('modalNotaProducto');
+        const textarea = document.getElementById('notaProductoTexto');
+        if (!modal || !textarea) return;
+
+        const detalleId = modal.dataset.productoId || productoNotaEditandoId;
+        if (!detalleId) {
+            cerrarModalNotaProducto();
+            return;
+        }
+
+        const index = productosSeleccionados.findIndex(p => String(p.detalleId) === String(detalleId));
+        if (index === -1) {
+            cerrarModalNotaProducto();
+            return;
+        }
+
+        productosSeleccionados[index].nota = (textarea.value || '').trim();
+        cerrarModalNotaProducto();
+        actualizarDetalle();
     }

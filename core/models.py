@@ -84,6 +84,7 @@ class DetalleComanda(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
     subtotal = models.IntegerField()
+    nota = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.producto.nombre} x {self.cantidad}"

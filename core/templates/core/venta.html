@@ -97,13 +97,42 @@
                 </div>
             </div>
 
+            <!-- Modal Nota por Producto -->
+            <div id="modalNotaProducto" class="modal">
+                <div class="modal-panel modal-panel--auth">
+                    <button type="button" class="modal-close" aria-label="Cerrar modal" onclick="cerrarModalNotaProducto()">&times;</button>
+                    <div class="modal-panel__header">
+                        <p class="modal-panel__eyebrow">Detalle del producto</p>
+                        <h3>Nota del producto</h3>
+                        <p class="modal-panel__description">Agrega una indicación específica solo para este ítem.</p>
+                    </div>
+
+                    <div class="modal-panel__body">
+                        <div class="form-group modal-field">
+                            <label>Producto</label>
+                            <div id="notaProductoNombre" style="font-weight:600;"></div>
+                        </div>
+
+                        <div class="form-group modal-field">
+                            <label for="notaProductoTexto">Nota (opcional)</label>
+                            <textarea id="notaProductoTexto" rows="3" placeholder="Ej: sin mayonesa, extra queso, bien cocido..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-panel__actions">
+                        <button type="button" class="modal-btn modal-btn--ghost" onclick="cerrarModalNotaProducto()">Cancelar</button>
+                        <button type="button" class="modal-btn modal-btn--primary" onclick="guardarNotaProductoModal()">Guardar nota</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="venta-panel">
                 <div class="filtros-comandas" aria-label="Filtrar comandas">
                     <div class="busqueda-comandas">
                         <input
                             type="text"
                             id="busquedaComanda"
-                            placeholder="Buscar cliente o # pedido"
+                            placeholder="Buscar cliente o #pedido"
                             aria-label="Buscar cliente o número de pedido"
                         >
                         <button type="button" id="limpiarBusquedaComanda" class="btn-limpiar-busqueda" aria-label="Limpiar búsqueda">&times;</button>

@@ -74,10 +74,12 @@ def _build_detalle_payload(productos_payload):
 
         subtotal = cantidad * producto.precio
         total += subtotal
+        nota_producto = (item.get('nota') or '').strip()
         detalles.append({
             'producto': producto,
             'cantidad': cantidad,
             'subtotal': subtotal,
+            'nota': nota_producto or None,
         })
 
     return detalles, total
@@ -655,6 +657,7 @@ def guardar_comanda(request):
             producto=detalle['producto'],
             cantidad=detalle['cantidad'],
             subtotal=detalle['subtotal'],
+            nota=detalle['nota'],
         )
         for detalle in detalles_payload
     ])
@@ -700,6 +703,7 @@ def comanda_detalle(request, comanda_id):
                 'producto_id': d.producto.id,
                 'cantidad': d.cantidad,
                 'subtotal': d.subtotal,
+                'nota': d.nota or '',
                 'imagen': d.producto.imagen.url if d.producto.imagen else ''
             } for d in detalles
         ]
@@ -804,6 +808,7 @@ def editar_comanda(request, id):
             producto=detalle['producto'],
             cantidad=detalle['cantidad'],
             subtotal=detalle['subtotal'],
+            nota=detalle['nota'],
         )
         for detalle in detalles_payload
     ])
@@ -849,6 +854,7 @@ def cerrar_caja(request):
                 'producto': detalle.producto.nombre,
                 'cantidad': detalle.cantidad,
                 'subtotal': detalle.subtotal,
+                'nota': detalle.nota or '',
             }
             for detalle in detalles
         ]
@@ -1148,6 +1154,8 @@ def imprimir_boleta_thermal(comanda):
                 ticket += f"{line}\n"
         else:
             ticket += f"{prod_str:<{avail_width}} {price_str:>{len(price_str)}}\n"
+        if det.nota:
+            ticket += f"  * Nota: {det.nota}\n"
     ticket += "-"*32 + "\n"
     if getattr(comanda, 'nota', None):
         ticket += f"Nota: {comanda.nota}\n"
@@ -1225,6 +1233,8 @@ def imprimir_comanda_cocina(comanda):
         while rest:
             ticket += f"{rest[:max_width]}\n"
             rest = rest[max_width:]
+        if det.nota:
+            ticket += f"  * Nota: {det.nota}\n"
     ticket += "-"*32 + "\n"
     if getattr(comanda, 'nota', None):
         ticket += f"Nota: {comanda.nota}\n"
