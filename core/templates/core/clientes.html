@@ -1,0 +1,155 @@
+{% extends "core/plantilla.html" %}
+{% load static %}
+
+{% block head %}
+	<head>
+		<title>Punto de Venta - Clientes</title>
+		<link rel="stylesheet" href="{% static 'core/css/clientes.css' %}">
+	</head>
+{% endblock %}
+
+{% block content %}
+	<div class="main-content">
+		<div class="content-frame">
+			<div class="content-header header-bar">
+				<h2>👤 Clientes</h2>
+				<div>
+					<button type="button" onclick="mostrarModalCliente()" class="boton-agregar">Agregar cliente</button>
+				</div>
+			</div>
+
+			<div id="modalCliente" class="modal">
+				<div class="modal-contenido">
+					<span class="cerrar" onclick="cerrarModalCliente()">&times;</span>
+					<form method="POST" id="formAgregarCliente">
+						{% csrf_token %}
+						<h3>Crear cliente</h3>
+
+						<label for="nombreCliente">Nombre del cliente *</label>
+						<input type="text" id="nombreCliente" name="nombre" placeholder="Ej: Juan Perez" required>
+
+						<label for="telefonoCliente">Telefono del cliente *</label>
+						<input type="tel" id="telefonoCliente" name="telefono" placeholder="Ej: +56912345678" required>
+
+						<div class="direcciones-wrap">
+							<div class="direcciones-header">
+								<h4>Direcciones *</h4>
+								<button type="button" id="btnAgregarDireccion" class="btn-agregar-direccion">Agregar direccion</button>
+							</div>
+							<div id="direccionesContainer"></div>
+						</div>
+
+						<button type="submit">Guardar cliente</button>
+					</form>
+				</div>
+			</div>
+
+			<div id="modalEditarCliente" class="modal">
+				<div class="modal-contenido">
+					<span class="cerrar" onclick="cerrarModalEditarCliente()">&times;</span>
+					<form id="formEditarCliente">
+						{% csrf_token %}
+						<h3>Editar cliente</h3>
+
+						<input type="hidden" id="editarClienteId">
+
+						<label for="editarNombreCliente">Nombre del cliente *</label>
+						<input type="text" id="editarNombreCliente" placeholder="Ej: Juan Perez" required>
+
+						<label for="editarTelefonoCliente">Telefono del cliente *</label>
+						<input type="tel" id="editarTelefonoCliente" placeholder="Ej: +56912345678" required>
+
+						<div class="direcciones-wrap">
+							<div class="direcciones-header">
+								<h4>Direcciones *</h4>
+								<button type="button" id="btnAgregarDireccionEditar" class="btn-agregar-direccion">Agregar direccion</button>
+							</div>
+							<div id="direccionesEditarContainer"></div>
+						</div>
+
+						<button type="submit">Guardar cambios</button>
+					</form>
+				</div>
+			</div>
+
+			<div class="filtros-productos filtros-clientes">
+				<form method="get" id="filtrosClientes">
+					<div class="filtro-grupo filtro-busqueda">
+						<label for="busquedaClientes">Buscar</label>
+						<input type="search" id="busquedaClientes" name="q" placeholder="Nombre, telefono o direccion" value="{{ busqueda }}">
+					</div>
+
+					<noscript>
+						<button type="submit" class="boton-agregar">Aplicar filtros</button>
+					</noscript>
+				</form>
+				<div class="resumen-resultados">
+					<div class="resumen-indicadores">
+						<span class="indicador">
+							<span class="indicador-label">Clientes encontrados</span>
+							<span class="indicador-valor">{{ clientes|length }}</span>
+						</span>
+					</div>
+					<a href="{% url 'clientes' %}" class="boton-limpiar">Limpiar filtros</a>
+				</div>
+			</div>
+
+			<div class="tabla-responsive tabla-productos">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Nombre</th>
+							<th>Telefono</th>
+							<th>Direcciones</th>
+							<th>Acciones</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for cliente in clientes %}
+						<tr id="row-cliente-{{ cliente.id }}">
+							<td>{{ cliente.id }}</td>
+							<td><span id="nombre-cliente-{{ cliente.id }}">{{ cliente.nombre }}</span></td>
+							<td><span id="telefono-cliente-{{ cliente.id }}">{{ cliente.telefono }}</span></td>
+							<td>
+								<ul class="lista-direcciones" id="direcciones-cliente-{{ cliente.id }}">
+									{% for dir in cliente.direcciones.all %}
+										<li>{{ dir.direccion }}</li>
+									{% empty %}
+										<li>Sin direcciones</li>
+									{% endfor %}
+								</ul>
+							</td>
+							<td id="acciones-cliente-{{ cliente.id }}">
+								<button
+									type="button"
+									onclick="abrirModalEditarCliente('{{ cliente.id }}')">
+									Editar
+								</button>
+								<button
+									type="button"
+									class="btn-eliminar-cliente"
+									onclick="confirmarEliminarCliente('{{ cliente.id }}')">
+									Eliminar
+								</button>
+							</td>
+						</tr>
+						{% empty %}
+						<tr>
+							<td colspan="5">No hay clientes registrados.</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	window.csrfToken = "{{ csrf_token }}";
+	window.crearClienteUrl = "{% url 'crear_cliente' %}";
+	window.editarClienteUrl = "{% url 'editar_cliente' 0 %}";
+	window.eliminarClienteUrl = "{% url 'eliminar_cliente' 0 %}";
+	</script>
+	<script src="{% static 'core/js/clientes.js' %}"></script>
+{% endblock %}

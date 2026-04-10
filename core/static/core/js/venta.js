@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputBusquedaComanda = document.getElementById('busquedaComanda');
     const botonLimpiarBusquedaComanda = document.getElementById('limpiarBusquedaComanda');
     const botonesFiltro = document.querySelectorAll('[data-filtro-comanda]');
+    const inputTelefonoCliente = document.getElementById('telefonoCliente');
     const AUTO_REFRESH_MS = 5000;
 
     if (editMetodoPago) {
@@ -74,6 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             actualizarEstadoBusquedaComandas();
             renderizarComandas();
+        });
+    }
+
+    if (inputTelefonoCliente) {
+        inputTelefonoCliente.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                autocompletarClientePorTelefono();
+            }
         });
     }
 
@@ -145,6 +155,41 @@ function resetFiltrosProductos() {
     let total = 0;
     let estadoInicialNota = "";
     let detalleCounter = 0; // Identificador único por ítem en el detalle
+    let direccionesClienteCache = [];
+    const OWNER_PASSWORD_PLACEHOLDER = '********';
+
+    function autocompletarCredencialesAdmin(userInputId, passInputId) {
+        if (!window.currentIsOwner) return;
+
+        const inputUsuario = document.getElementById(userInputId);
+        const inputPass = document.getElementById(passInputId);
+
+        if (inputUsuario && !inputUsuario.value) {
+            inputUsuario.value = window.currentUsername || '';
+        }
+
+        if (inputPass && !inputPass.value) {
+            inputPass.value = OWNER_PASSWORD_PLACEHOLDER;
+        }
+    }
+
+    function normalizarCredencialesAdmin(username, password) {
+        let normalizedUsername = (username || '').trim();
+        let normalizedPassword = password || '';
+
+        if (window.currentIsOwner && normalizedPassword === OWNER_PASSWORD_PLACEHOLDER) {
+            normalizedPassword = '';
+        }
+
+        if (window.currentIsOwner && !normalizedUsername && !normalizedPassword) {
+            normalizedUsername = window.currentUsername || '';
+        }
+
+        return {
+            username: normalizedUsername,
+            password: normalizedPassword,
+        };
+    }
 
     function abrirModal() { 
         console.log("abrirModal: Iniciando apertura de modal");
@@ -154,9 +199,20 @@ function resetFiltrosProductos() {
 
         // Reinicia campos básicos
         document.getElementById('cliente').value = '';
+        const telefonoInput = document.getElementById('telefonoCliente');
+        const direccionInput = document.getElementById('direccionCliente');
+        const selectDirecciones = document.getElementById('selectDireccionesCliente');
+        const numeroInput = document.getElementById('numeroCliente');
+        if (telefonoInput) telefonoInput.value = '';
+        if (direccionInput) direccionInput.value = '';
+        if (selectDirecciones) {
+            selectDirecciones.innerHTML = '<option value="">Direcciones</option>';
+            selectDirecciones.disabled = false;
+        }
+        if (numeroInput) numeroInput.value = '';
+        direccionesClienteCache = [];
         document.getElementById('metodo_pago').value = 'efectivo';
         document.getElementById('servicio').value = 'servir';
-        document.getElementById('notaComanda').value = '';
         document.getElementById("monto_efectivo").value = '';
         document.getElementById("monto_tarjeta_debito").value = '';
         document.getElementById("monto_tarjeta_credito").value = '';
@@ -173,6 +229,9 @@ function resetFiltrosProductos() {
 
         // Restablece filtros de productos y búsqueda
         resetFiltrosProductos();
+
+        // Ajusta campos de cliente segun servicio
+        actualizarCamposClientePorServicio();
 
         // Reinicia fecha y hora
         const ahora = new Date();
@@ -201,7 +260,18 @@ function resetFiltrosProductos() {
         
         // Opcional: limpiar campos del formulario
         document.getElementById('cliente').value = '';
-        document.getElementById('notaComanda').value = '';
+        const telefonoInput = document.getElementById('telefonoCliente');
+        const direccionInput = document.getElementById('direccionCliente');
+        const selectDirecciones = document.getElementById('selectDireccionesCliente');
+        const numeroInput = document.getElementById('numeroCliente');
+        if (telefonoInput) telefonoInput.value = '';
+        if (direccionInput) direccionInput.value = '';
+        if (selectDirecciones) {
+            selectDirecciones.innerHTML = '<option value="">Direcciones</option>';
+            selectDirecciones.disabled = false;
+        }
+        if (numeroInput) numeroInput.value = '';
+        direccionesClienteCache = [];
         
         // Limpiar productos seleccionados, contador y total
         productosSeleccionados = [];
@@ -216,6 +286,126 @@ function resetFiltrosProductos() {
         const metodo = document.getElementById('metodo_pago').value;
         document.getElementById('pago_mixto_campos').style.display = metodo === 'mixto' ? 'block' : 'none';
     }
+
+    function obtenerSiguienteNumeroCliente() {
+        if (!window.siguienteNumeroClienteUrl) {
+            // Si no tenemos URL, asumimos que el conteo parte en 1
+            return Promise.resolve('1');
+        }
+
+        return fetch(window.siguienteNumeroClienteUrl)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('sin numero')))
+            .then(data => String(data.siguiente ?? 1))
+            .catch(() => '1');
+    }
+
+    function actualizarCamposClientePorServicio() {
+        const tipoServicio = document.getElementById('servicio')?.value || 'servir';
+        const grupoNumero = document.getElementById('grupoNumeroCliente');
+        const grupoNombre = document.getElementById('grupoNombreCliente');
+        const grupoTelefono = document.getElementById('grupoTelefonoCliente');
+        const grupoDireccion = document.getElementById('grupoDireccionCliente');
+        const inputCliente = document.getElementById('cliente');
+        const inputTelefono = document.getElementById('telefonoCliente');
+        const inputDireccion = document.getElementById('direccionCliente');
+        const inputNumero = document.getElementById('numeroCliente');
+        const selectDirecciones = document.getElementById('selectDireccionesCliente');
+        const comandaId = document.getElementById('modalComanda')?.dataset.comandaId;
+
+        if (tipoServicio === 'servir') {
+            if (grupoNumero) grupoNumero.style.display = 'block';
+            if (grupoNombre) grupoNombre.style.display = 'none';
+            if (grupoTelefono) grupoTelefono.style.display = 'none';
+            if (grupoDireccion) grupoDireccion.style.display = 'none';
+            if (inputCliente) inputCliente.value = '';
+            if (inputTelefono) inputTelefono.value = '';
+            if (inputDireccion) inputDireccion.value = '';
+            if (selectDirecciones) {
+                selectDirecciones.innerHTML = '<option value="">Direcciones</option>';
+                selectDirecciones.disabled = true;
+            }
+            direccionesClienteCache = [];
+
+            if (!comandaId) {
+                obtenerSiguienteNumeroCliente().then(siguiente => {
+                    if (inputNumero) inputNumero.value = siguiente;
+                });
+            }
+            return;
+        }
+
+        if (grupoNumero) grupoNumero.style.display = 'none';
+        if (grupoNombre) grupoNombre.style.display = 'block';
+        if (grupoTelefono) grupoTelefono.style.display = 'block';
+        if (grupoDireccion) grupoDireccion.style.display = 'block';
+        if (selectDirecciones) selectDirecciones.disabled = false;
+        if (inputNumero) inputNumero.value = '';
+    }
+
+    function actualizarSelectDirecciones(preferida = '') {
+        const select = document.getElementById('selectDireccionesCliente');
+        if (!select) return;
+
+        const opciones = ['<option value="">Direcciones</option>'];
+        direccionesClienteCache.forEach(direccion => {
+            const safe = String(direccion || '').trim();
+            if (safe) opciones.push(`<option value="${safe.replaceAll('"', '&quot;')}">${safe}</option>`);
+        });
+        select.innerHTML = opciones.join('');
+
+        if (preferida && direccionesClienteCache.includes(preferida)) {
+            select.value = preferida;
+        }
+    }
+
+    function seleccionarDireccionDesdeLista() {
+        const select = document.getElementById('selectDireccionesCliente');
+        const direccionInput = document.getElementById('direccionCliente');
+        if (!select || !direccionInput) return;
+
+        const valor = (select.value || '').trim();
+        if (valor) direccionInput.value = valor;
+    }
+
+    function autocompletarClientePorTelefono() {
+        const tipoServicio = document.getElementById('servicio')?.value || 'servir';
+        if (tipoServicio !== 'delivery' && tipoServicio !== 'reserva') {
+            return;
+        }
+
+        const telefonoInput = document.getElementById('telefonoCliente');
+        const clienteInput = document.getElementById('cliente');
+        const direccionInput = document.getElementById('direccionCliente');
+
+        const telefono = (telefonoInput?.value || '').trim();
+        if (!telefono || !window.buscarClientePorTelefonoUrl) {
+            return;
+        }
+
+        const url = `${window.buscarClientePorTelefonoUrl}?telefono=${encodeURIComponent(telefono)}`;
+        fetch(url)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('lookup error')))
+            .then(data => {
+                if (!data.encontrado || !data.cliente) return;
+
+                direccionesClienteCache = Array.isArray(data.cliente.direcciones)
+                    ? data.cliente.direcciones.filter(Boolean)
+                    : [];
+                actualizarSelectDirecciones(data.cliente.direccion || '');
+
+                if (clienteInput && !clienteInput.value.trim()) {
+                    clienteInput.value = data.cliente.nombre || '';
+                }
+
+                if (direccionInput && !direccionInput.value.trim()) {
+                    direccionInput.value = data.cliente.direccion || '';
+                }
+            })
+            .catch(() => {
+                // Silencioso para no interrumpir el flujo de venta.
+            });
+    }
+    window.seleccionarDireccionDesdeLista = seleccionarDireccionDesdeLista;
 
 
     // Actualiza la lista detalle y el total en la izquierda
@@ -337,14 +527,15 @@ function resetFiltrosProductos() {
 
     // Modificamos guardarComanda para enviar productosSeleccionados
     function guardarComanda(estado) {
-        const cliente = document.getElementById('cliente').value;
+        const cliente = (document.getElementById('cliente')?.value || '').trim();
         const metodoPago = document.getElementById('metodo_pago').value;
         const tipoServicio = document.getElementById('servicio').value;
+        const telefonoCliente = (document.getElementById('telefonoCliente')?.value || '').trim();
+        const direccionCliente = (document.getElementById('direccionCliente')?.value || '').trim();
         const montoEfectivoInput = document.getElementById('monto_efectivo');
         const montoTarjetaDebitoInput = document.getElementById('monto_tarjeta_debito');
         const montoTarjetaCreditoInput = document.getElementById('monto_tarjeta_credito');
         const montoTransferenciaInput = document.getElementById('monto_transferencia');
-        const notaComanda = document.getElementById('notaComanda').value;
         const comandaId = document.getElementById('modalComanda').dataset.comandaId;
         const totalComanda = total;
 
@@ -353,8 +544,16 @@ function resetFiltrosProductos() {
         let montoTarjetaCredito = parseInt(montoTarjetaCreditoInput.value) || 0;
         let montoTransferencia = parseInt(montoTransferenciaInput.value) || 0;
 
-        if (!cliente || productosSeleccionados.length === 0) {
-            showAppModal("Debe ingresar el cliente y al menos un producto.", {
+        if (productosSeleccionados.length === 0) {
+            showAppModal("Debe agregar al menos un producto.", {
+                variant: 'warning',
+                title: 'Datos incompletos'
+            });
+            return;
+        }
+
+        if ((tipoServicio === 'delivery' || tipoServicio === 'reserva') && (!cliente || !telefonoCliente || !direccionCliente)) {
+            showAppModal("Debe ingresar nombre, telefono y direccion para delivery o reserva.", {
                 variant: 'warning',
                 title: 'Datos incompletos'
             });
@@ -398,11 +597,12 @@ function resetFiltrosProductos() {
             estado: estado,
             metodo_pago: metodoPago,
             tipo_servicio: tipoServicio,
+            telefono_cliente: telefonoCliente,
+            direccion_cliente: direccionCliente,
             monto_efectivo: montoEfectivo,
             monto_tarjeta_debito: montoTarjetaDebito,
             monto_tarjeta_credito: montoTarjetaCredito,
-            monto_transferencia: montoTransferencia,
-            nota_comanda: notaComanda
+            monto_transferencia: montoTransferencia
         };
 
         const url = comandaId ? `/editar-comanda/${comandaId}/` : '/guardar_comanda/';
@@ -468,14 +668,25 @@ function resetFiltrosProductos() {
             document.getElementById('cliente').value = data.cliente || '';
             document.getElementById('metodo_pago').value = data.metodo_pago || 'efectivo';
             document.getElementById('servicio').value = data.tipo_servicio || 'servir';
+            if (document.getElementById('telefonoCliente')) {
+                document.getElementById('telefonoCliente').value = data.telefono_cliente || '';
+            }
+            if (document.getElementById('direccionCliente')) {
+                document.getElementById('direccionCliente').value = data.direccion_cliente || '';
+            }
+            if (document.getElementById('numeroCliente')) {
+                document.getElementById('numeroCliente').value = data.numero_cliente ?? '';
+            }
+            actualizarCamposClientePorServicio();
+
+            direccionesClienteCache = data.direccion_cliente ? [data.direccion_cliente] : [];
+            actualizarSelectDirecciones(data.direccion_cliente || '');
 
             mostrarCamposPago();
             document.getElementById('monto_efectivo').value = data.monto_efectivo || '';
             document.getElementById('monto_tarjeta_debito').value = data.monto_tarjeta_debito || '';
             document.getElementById('monto_tarjeta_credito').value = data.monto_tarjeta_credito || '';
             document.getElementById('monto_transferencia').value = data.monto_transferencia || '';
-
-            document.getElementById('notaComanda').value = data.nota_comanda || '';
 
 
             // Rellena productos
@@ -516,7 +727,6 @@ function resetFiltrosProductos() {
         const montoTarjetaDebito = document.getElementById('editMontoTarjetaDebito').value;
         const montoTarjetaCredito = document.getElementById('editMontoTarjetaCredito').value;
         const montoTransferencia = document.getElementById('editMontoTransferencia').value;
-        const notaComanda = document.getElementById('editNotaComanda').value;
         
         let productosSeleccionados = [];
 
@@ -528,7 +738,6 @@ function resetFiltrosProductos() {
             monto_tarjeta_debito: montoTarjetaDebito,
             monto_tarjeta_credito: montoTarjetaCredito,
             monto_transferencia: montoTransferencia,
-            nota_comanda: notaComanda,
             productos: productosSeleccionados
         };
 
@@ -686,15 +895,29 @@ function resetFiltrosProductos() {
 
         const esCerrada = comanda.estado === 'cerrada';
         const nombreCliente = comanda.cliente || comanda.nombre_cliente || 'No asignado';
+        const telefonoCliente = comanda.telefono_cliente || '';
+        const direccionCliente = comanda.direccion_cliente || '';
+        const numeroCliente = comanda.numero_cliente;
         const tipoServicioRaw = comanda.tipo_servicio || comanda.tipoServicio || 'servir';
         const tipoServicio = normalizarTipoServicio(tipoServicioRaw);
         const etiquetaServicio = obtenerEtiquetaTipoServicio(tipoServicio);
+        const etiquetaCliente = (tipoServicio === 'servir' && numeroCliente !== null && numeroCliente !== undefined)
+            ? `Cliente N ${numeroCliente}`
+            : `Cliente: ${nombreCliente}`;
+        const lineaTelefono = ((tipoServicio === 'delivery' || tipoServicio === 'reserva') && telefonoCliente)
+            ? `<div>Telefono: ${telefonoCliente}</div>`
+            : '';
+        const lineaDireccion = ((tipoServicio === 'delivery' || tipoServicio === 'reserva') && direccionCliente)
+            ? `<div>Direccion: ${direccionCliente}</div>`
+            : '';
 
         burbuja.innerHTML = `
             <div class="estado ${esCerrada ? 'estado-pagado' : 'estado-pendiente'}">
                 ${esCerrada ? 'Pagado' : 'Pendiente'}
             </div>
-            <div>Cliente: ${nombreCliente}</div>
+            <div>${etiquetaCliente}</div>
+            ${lineaTelefono}
+            ${lineaDireccion}
             <div class="tipo-servicio-comanda">Servicio: ${etiquetaServicio}</div>
             <div class="numero-comanda">#${comanda.id}</div>
         `;
@@ -726,10 +949,20 @@ function resetFiltrosProductos() {
 
     function cumpleBusquedaComanda(comanda, termino) {
         const cliente = String(comanda.cliente || comanda.nombre_cliente || '').toLowerCase();
+        const telefono = String(comanda.telefono_cliente || '').toLowerCase();
+        const direccion = String(comanda.direccion_cliente || '').toLowerCase();
+        const numeroCliente = String(comanda.numero_cliente ?? '').toLowerCase();
         const numeroPedido = String(comanda.id || '').toLowerCase();
         const terminoLimpio = termino.replace('#', '');
 
-        return cliente.includes(termino) || numeroPedido.includes(termino) || numeroPedido.includes(terminoLimpio);
+        return (
+            cliente.includes(termino) ||
+            telefono.includes(termino) ||
+            direccion.includes(termino) ||
+            numeroCliente.includes(terminoLimpio) ||
+            numeroPedido.includes(termino) ||
+            numeroPedido.includes(terminoLimpio)
+        );
     }
 
     function normalizarTipoServicio(valor) {
@@ -763,17 +996,35 @@ function resetFiltrosProductos() {
         // Guarda el ID en el modal de eliminación y lo muestra
         const modalEliminar = document.getElementById("modalEliminarComanda");
         modalEliminar.dataset.comandaId = comandaId;
+
+        autocompletarCredencialesAdmin('adminEliminar', 'passEliminar');
+
         modalEliminar.style.display = "flex";  // Usa "flex" para que se vea como el otro modal
     }
     
     function verificarYEliminarComanda() {
-        const username = document.getElementById('adminEliminar').value;
-        const password = document.getElementById('passEliminar').value;
+        const usernameInput = document.getElementById('adminEliminar');
+        const passwordInput = document.getElementById('passEliminar');
+        const credentials = normalizarCredencialesAdmin(
+            usernameInput ? usernameInput.value : '',
+            passwordInput ? passwordInput.value : ''
+        );
+        const username = credentials.username;
+        const password = credentials.password;
         const motivo = document.getElementById('motivoEliminar').value;
         const comandaId = document.getElementById('modalEliminarComanda').dataset.comandaId;
 
-        if (!username || !password || !motivo) {
-            mostrarError("Todos los campos son obligatorios.");
+        if (window.currentIsOwner && !username && !password) {
+            username = window.currentUsername || '';
+        }
+
+        if (!motivo) {
+            mostrarError("Debe ingresar un motivo.");
+            return;
+        }
+
+        if (!window.currentIsOwner && (!username || !password)) {
+            mostrarError("Debe ingresar usuario y contrasena de administrador.");
             return;
         }
 
@@ -803,6 +1054,9 @@ function resetFiltrosProductos() {
     }
     
     function mostrarModalCerrarCaja() {
+        // Si ya estamos logueados como dueno/superusuario, rellenar credenciales visualmente.
+        autocompletarCredencialesAdmin('adminCierre', 'passCierre');
+
         document.getElementById('modalCerrarCaja').style.display = 'flex';
     }
 
@@ -814,8 +1068,14 @@ function resetFiltrosProductos() {
     }
 
     function verificarYConfirmarCierre() {
-        const username = document.getElementById('adminCierre').value;
-        const password = document.getElementById('passCierre').value;
+        const usernameInput = document.getElementById('adminCierre');
+        const passwordInput = document.getElementById('passCierre');
+        const credentials = normalizarCredencialesAdmin(
+            usernameInput ? usernameInput.value : '',
+            passwordInput ? passwordInput.value : ''
+        );
+        const username = credentials.username;
+        const password = credentials.password;
 
         fetch(window.verificarSuperusuarioUrl, {
             method: 'POST',
@@ -913,8 +1173,20 @@ function resetFiltrosProductos() {
                     <div class="contenido-formulario-comanda">
                         <div class="form-group">
                             <label>Cliente:</label>
-                            <div>${data.cliente || 'No asignado'}</div>
+                            <div>${(data.tipo_servicio === 'servir' && data.numero_cliente !== null && data.numero_cliente !== undefined) ? `Cliente N ${data.numero_cliente}` : (data.cliente || 'No asignado')}</div>
                         </div>
+
+                        ${((data.tipo_servicio === 'delivery' || data.tipo_servicio === 'reserva') && data.telefono_cliente) ? `
+                        <div class="form-group">
+                            <label>Telefono:</label>
+                            <div>${data.telefono_cliente}</div>
+                        </div>` : ''}
+
+                        ${((data.tipo_servicio === 'delivery' || data.tipo_servicio === 'reserva') && data.direccion_cliente) ? `
+                        <div class="form-group">
+                            <label>Direccion:</label>
+                            <div>${data.direccion_cliente}</div>
+                        </div>` : ''}
 
                         <div class="form-group">
                             <label>Tipo de Servicio:</label>
@@ -932,12 +1204,7 @@ function resetFiltrosProductos() {
                         </div>
 
                         ${data.nota_comanda ? `
-                        <div class="form-group">
-                            <label class="label-nota">Nota:</label>
-                            <div class="textarea-nota" style="background:#f9f9f9; border:none;">
-                                ${data.nota_comanda}
-                            </div>
-                        </div>` : ''}
+                        ` : ''}
 
                         <div class="form-group">
                             <label>Productos:</label>
@@ -991,6 +1258,7 @@ function resetFiltrosProductos() {
     function reabrirComanda(comandaId) {
         comandaAReabrir = comandaId;
         document.getElementById("modalDetalleCerrada").style.display = "none";
+        autocompletarCredencialesAdmin('usernameSuperAdmin', 'passwordSuperAdmin');
         document.getElementById("modalSuperAdmin").style.display = "flex";
     }
 
@@ -1001,8 +1269,14 @@ function resetFiltrosProductos() {
     }
 
     function confirmarSuperadmin() {
-        const username = document.getElementById("usernameSuperAdmin").value;
-        const password = document.getElementById("passwordSuperAdmin").value;
+        const usernameInput = document.getElementById("usernameSuperAdmin");
+        const passwordInput = document.getElementById("passwordSuperAdmin");
+        const credentials = normalizarCredencialesAdmin(
+            usernameInput ? usernameInput.value : '',
+            passwordInput ? passwordInput.value : ''
+        );
+        const username = credentials.username;
+        const password = credentials.password;
 
         fetch("/verificar-superusuario/", {
             method: "POST",
@@ -1123,6 +1397,7 @@ function resetFiltrosProductos() {
         tipoImpresion = tipo;
 
         document.getElementById("modalDetalleCerrada").style.display = "none";
+        autocompletarCredencialesAdmin('usernameSuperAdmin', 'passwordSuperAdmin');
         document.getElementById("modalSuperAdmin").style.display = "flex";
     }
 

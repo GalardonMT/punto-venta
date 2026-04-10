@@ -22,7 +22,7 @@ from openpyxl.styles import Font
 
 from .forms import ProductoForm
 from .models import (Categoria, Comanda, DetalleComanda, EliminacionComanda,
-                    HistorialComanda, Producto)
+                    HistorialComanda, Producto, Cliente, DireccionCliente)
 from core.utils.payments import PaymentError, calculate_payment_breakdown
 from core.utils.printers import PrinterError, send_raw_to_printer
 
@@ -46,6 +46,73 @@ def _sanitize_estado(value: str | None) -> str:
 def _sanitize_tipo_servicio(value: str | None) -> str:
     tipo = (value or 'servir').lower()
     return tipo if tipo in VALID_TIPOS_SERVICIO else 'servir'
+
+
+def _next_numero_cliente_servir() -> int:
+    max_numero = Comanda.objects.filter(
+        tipo_servicio='servir',
+        numero_cliente__isnull=False,
+    ).aggregate(max_numero=Max('numero_cliente'))['max_numero']
+    # Si no hay registros previos, comenzar en 1 en lugar de 0
+    return 1 if max_numero is None else max_numero + 1
+
+
+def _resolve_cliente_data(
+    data: dict,
+    tipo_servicio: str,
+    comanda: Comanda | None = None,
+) -> tuple[str, str | None, str | None, int | None]:
+    """Devuelve (nombre_cliente, telefono_cliente, direccion_cliente, numero_cliente)."""
+    nombre = (data.get('cliente') or '').strip()
+    telefono = (data.get('telefono_cliente') or '').strip()
+    direccion = (data.get('direccion_cliente') or '').strip()
+
+    if tipo_servicio == 'servir':
+        # Mantener numero si ya existe al editar; si no, asignar siguiente secuencial.
+        numero = comanda.numero_cliente if comanda and comanda.numero_cliente is not None else _next_numero_cliente_servir()
+        return f'Cliente {numero}', None, None, numero
+
+    if not nombre:
+        raise ValueError('Debe ingresar el nombre del cliente para delivery o reserva')
+
+    if not telefono:
+        raise ValueError('Debe ingresar el teléfono para delivery o reserva')
+
+    if not direccion:
+        raise ValueError('Debe ingresar la dirección para delivery o reserva')
+
+    return nombre, telefono, direccion, None
+
+
+@login_required(login_url='login')
+def buscar_cliente_por_telefono(request):
+    telefono = (request.GET.get('telefono') or '').strip()
+    if not telefono:
+        return JsonResponse({'encontrado': False})
+
+    cliente = (
+        Cliente.objects
+        .prefetch_related('direcciones')
+        .filter(telefono=telefono)
+        .order_by('-id')
+        .first()
+    )
+
+    if not cliente:
+        return JsonResponse({'encontrado': False})
+
+    direccion = cliente.direcciones.order_by('id').values_list('direccion', flat=True).first() or ''
+    direcciones = list(cliente.direcciones.order_by('id').values_list('direccion', flat=True))
+    return JsonResponse({
+        'encontrado': True,
+        'cliente': {
+            'id': cliente.id,
+            'nombre': cliente.nombre,
+            'telefono': cliente.telefono,
+            'direccion': direccion,
+            'direcciones': direcciones,
+        }
+    })
 
 
 def _build_detalle_payload(productos_payload):
@@ -303,12 +370,17 @@ def venta(request):
     productos = Producto.objects.all()
     comandas = Comanda.objects.all().order_by('-fecha')
     categorias = Categoria.objects.all()
-    return render(request, 'core/venta.html', {'productos': productos, 'comandas': comandas, 'categorias': categorias})
+    return render(request, 'core/venta.html', {
+        'productos': productos,
+        'comandas': comandas,
+        'categorias': categorias,
+        'es_owner_actual': _user_is_owner(request.user),
+    })
 
 
 @login_required(login_url='login')
 def reportes(request):
-    if not request.user.groups.filter(name='Dueños').exists():
+    if not _user_is_owner(request.user):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
 
@@ -399,24 +471,39 @@ def nueva_comanda(request):
 @csrf_exempt
 @require_POST
 def verificar_superusuario(request):
+    """Verifica permisos de superusuario/dueno.
+
+    - Si hay sesion activa de dueno/superusuario, permite pasar sin volver a pedir
+      contrasena.
+    - Si no, requiere username + password via authenticate.
+    """
     try:
         datos = json.loads(request.body)
 
-        username = datos.get('username')
-        password = datos.get('password')
+        username = (datos.get('username') or '').strip()
+        password = (datos.get('password') or '').strip()
 
+        # Atajo: usuario autenticado en sesion y con rol de dueno/superusuario
+        if request.user.is_authenticated and _user_is_owner(request.user):
+            if (not username and not password) or username == request.user.username:
+                return JsonResponse({
+                    'es_superusuario': True,
+                    'mensaje': 'Sesion de administrador valida'
+                })
+
+        # Flujo normal: credenciales explicitas
         if not username or not password:
             return JsonResponse({
                 'es_superusuario': False,
-                'error': 'Usuario y contraseña son requeridos'
+                'error': 'Usuario y contrasena son requeridos'
             }, status=400)
 
         user = authenticate(username=username, password=password)
 
-        if user and (user.is_superuser or user.groups.filter(name='Dueños').exists()):
+        if user and _user_is_owner(user):
             return JsonResponse({
                 'es_superusuario': True,
-                'mensaje': 'Credenciales válidas'
+                'mensaje': 'Credenciales validas'
             })
 
         return JsonResponse({
@@ -429,6 +516,11 @@ def verificar_superusuario(request):
             'es_superusuario': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required(login_url='login')
+def siguiente_numero_cliente(request):
+    return JsonResponse({'siguiente': _next_numero_cliente_servir()})
 
 
 
@@ -481,7 +573,7 @@ def api_usuario_detalle(request, user_id):
 # Productos
 @login_required(login_url='login')
 def productos(request):
-    if not request.user.groups.filter(name='Dueños').exists():
+    if not _user_is_owner(request.user):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('inicio')
 
@@ -545,6 +637,114 @@ def productos(request):
         'form': form,
         'categorias': categorias,
     })
+
+
+@login_required(login_url='login')
+def clientes(request):
+    if not _user_is_owner(request.user):
+        messages.error(request, "No tienes permisos para acceder a esta sección.")
+        return redirect('inicio')
+
+    busqueda = (request.GET.get('q') or '').strip()
+    clientes_qs = Cliente.objects.prefetch_related('direcciones').order_by('-id')
+
+    if busqueda:
+        clientes_qs = clientes_qs.filter(
+            Q(nombre__icontains=busqueda)
+            | Q(telefono__icontains=busqueda)
+            | Q(direcciones__direccion__icontains=busqueda)
+        ).distinct()
+
+    return render(request, 'core/clientes.html', {
+        'clientes': clientes_qs,
+        'busqueda': busqueda,
+    })
+
+
+@require_POST
+@login_required(login_url='login')
+def crear_cliente(request):
+    if not _user_is_owner(request.user):
+        return JsonResponse({'success': False, 'message': 'No autorizado'}, status=403)
+
+    nombre = (request.POST.get('nombre') or '').strip()
+    telefono = (request.POST.get('telefono') or '').strip()
+    direcciones_raw = request.POST.getlist('direcciones[]')
+    direcciones = [direccion.strip() for direccion in direcciones_raw if direccion and direccion.strip()]
+
+    if not nombre:
+        return JsonResponse({'success': False, 'message': 'El nombre del cliente es obligatorio'}, status=400)
+
+    if not telefono:
+        return JsonResponse({'success': False, 'message': 'El telefono del cliente es obligatorio'}, status=400)
+
+    if Cliente.objects.filter(telefono=telefono).exists():
+        return JsonResponse({'success': False, 'message': 'Ya existe un cliente con ese numero de telefono'}, status=400)
+
+    if not direcciones:
+        return JsonResponse({'success': False, 'message': 'Debe ingresar al menos una direccion'}, status=400)
+
+    cliente = Cliente.objects.create(nombre=nombre, telefono=telefono)
+    DireccionCliente.objects.bulk_create([
+        DireccionCliente(cliente=cliente, direccion=direccion)
+        for direccion in direcciones
+    ])
+
+    return JsonResponse({'success': True, 'cliente_id': cliente.id})
+
+
+@require_POST
+@login_required(login_url='login')
+def editar_cliente(request, cliente_id):
+    if not _user_is_owner(request.user):
+        return JsonResponse({'success': False, 'message': 'No autorizado'}, status=403)
+
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'JSON inválido'}, status=400)
+
+    nombre = (data.get('nombre') or '').strip()
+    telefono = (data.get('telefono') or '').strip()
+    direcciones_raw = data.get('direcciones') or []
+    direcciones = [str(direccion).strip() for direccion in direcciones_raw if str(direccion).strip()]
+
+    if not nombre:
+        return JsonResponse({'success': False, 'message': 'El nombre del cliente es obligatorio'}, status=400)
+
+    if not telefono:
+        return JsonResponse({'success': False, 'message': 'El telefono del cliente es obligatorio'}, status=400)
+
+    if Cliente.objects.filter(telefono=telefono).exclude(id=cliente.id).exists():
+        return JsonResponse({'success': False, 'message': 'Ya existe un cliente con ese numero de telefono'}, status=400)
+
+    if not direcciones:
+        return JsonResponse({'success': False, 'message': 'Debe ingresar al menos una direccion'}, status=400)
+
+    cliente.nombre = nombre
+    cliente.telefono = telefono
+    cliente.save(update_fields=['nombre', 'telefono'])
+
+    DireccionCliente.objects.filter(cliente=cliente).delete()
+    DireccionCliente.objects.bulk_create([
+        DireccionCliente(cliente=cliente, direccion=direccion)
+        for direccion in direcciones
+    ])
+
+    return JsonResponse({'success': True})
+
+
+@require_POST
+@login_required(login_url='login')
+def eliminar_cliente(request, cliente_id):
+    if not _user_is_owner(request.user):
+        return JsonResponse({'success': False, 'message': 'No autorizado'}, status=403)
+
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    cliente.delete()
+    return JsonResponse({'success': True})
 
 @csrf_exempt
 @login_required
@@ -620,8 +820,11 @@ def guardar_comanda(request):
         return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
 
     estado = _sanitize_estado(data.get('estado'))
-    cliente_nombre = (data.get('cliente') or '').strip() or 'No asignado'
     tipo_servicio = _sanitize_tipo_servicio(data.get('tipo_servicio'))
+    try:
+        cliente_nombre, telefono_cliente, direccion_cliente, numero_cliente = _resolve_cliente_data(data, tipo_servicio)
+    except ValueError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
     nota = data.get('nota_comanda')
 
     montos = {
@@ -642,6 +845,9 @@ def guardar_comanda(request):
 
     comanda = Comanda.objects.create(
         nombre_cliente=cliente_nombre,
+        telefono_cliente=telefono_cliente,
+        direccion_cliente=direccion_cliente,
+        numero_cliente=numero_cliente,
         estado=estado,
         total=total,
         empleado=request.user,
@@ -671,6 +877,9 @@ def comandas_json(request):
     data = [{
         'id': c.id,
         'cliente': c.nombre_cliente or 'No asignado',
+        'telefono_cliente': c.telefono_cliente,
+        'direccion_cliente': c.direccion_cliente,
+        'numero_cliente': c.numero_cliente,
         'estado': c.estado,
         'tipo_servicio': c.tipo_servicio,
         'es_historial': False,
@@ -689,6 +898,9 @@ def comanda_detalle(request, comanda_id):
     data = {
         'id': comanda.id,
         'cliente': comanda.nombre_cliente or '',
+        'telefono_cliente': comanda.telefono_cliente or '',
+        'direccion_cliente': comanda.direccion_cliente or '',
+        'numero_cliente': comanda.numero_cliente,
         'total': comanda.total,
         'metodo_pago': comanda.metodo_pago,
         'tipo_servicio': comanda.tipo_servicio,
@@ -719,6 +931,9 @@ def historial_comanda_detalle(request, comanda_id):
     data = {
         'id': comanda.id,
         'cliente': comanda.nombre_cliente or '',
+        'telefono_cliente': getattr(comanda, 'telefono_cliente', '') or '',
+        'direccion_cliente': getattr(comanda, 'direccion_cliente', '') or '',
+        'numero_cliente': getattr(comanda, 'numero_cliente', None),
         'total': comanda.total,
         'metodo_pago': comanda.metodo_pago,
         'tipo_servicio': comanda.tipo_servicio,
@@ -791,10 +1006,19 @@ def editar_comanda(request, id):
     except PaymentError as exc:
         return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
 
-    comanda.nombre_cliente = (data.get('cliente') or '').strip() or 'No asignado'
+    tipo_servicio = _sanitize_tipo_servicio(data.get('tipo_servicio'))
+    try:
+        cliente_nombre, telefono_cliente, direccion_cliente, numero_cliente = _resolve_cliente_data(data, tipo_servicio, comanda=comanda)
+    except ValueError as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=400)
+
+    comanda.nombre_cliente = cliente_nombre
+    comanda.telefono_cliente = telefono_cliente
+    comanda.direccion_cliente = direccion_cliente
+    comanda.numero_cliente = numero_cliente
     comanda.estado = _sanitize_estado(data.get('estado'))
     comanda.metodo_pago = metodo_pago
-    comanda.tipo_servicio = _sanitize_tipo_servicio(data.get('tipo_servicio'))
+    comanda.tipo_servicio = tipo_servicio
     comanda.total = total
     comanda.nota = data.get('nota_comanda')
     for field, value in payment_breakdown.items():
@@ -862,6 +1086,9 @@ def cerrar_caja(request):
         historial_entries.append(HistorialComanda(
             fecha=comanda.fecha,
             nombre_cliente=comanda.nombre_cliente,
+            telefono_cliente=comanda.telefono_cliente,
+            direccion_cliente=comanda.direccion_cliente,
+            numero_cliente=comanda.numero_cliente,
             empleado=comanda.empleado,
             total=comanda.total,
             metodo_pago=comanda.metodo_pago,
@@ -889,10 +1116,25 @@ def verificar_y_eliminar_comanda(request):
         motivo = data.get('motivo')
         comanda_id = data.get('comanda_id')
 
-        # Verificar usuario y contraseña
-        user = authenticate(username=username, password=password)
+        # Verificar usuario y contrasena o usar sesion de dueno/superusuario
+        session_user = request.user if request.user.is_authenticated else None
+        user = None
 
-        if user is None or (user.username != 'admin' and not user.groups.filter(name='Dueños').exists()):
+        username = (username or '').strip()
+        password = (password or '').strip()
+
+        # Si la sesion actual es de dueno/superusuario, permitir cuando:
+        # - no se envian credenciales, o
+        # - se envia su propio username sin contrasena (campo autocompletado visual)
+        if session_user and _user_is_owner(session_user) and (
+            (not username and not password) or
+            (username == session_user.username and not password)
+        ):
+            user = session_user
+        else:
+            user = authenticate(username=username, password=password)
+
+        if user is None or (user.username != 'admin' and not _user_is_owner(user)):
             return JsonResponse({'success': False, 'error': 'Credenciales incorrectas o sin permisos.'})
 
         try:
@@ -922,9 +1164,21 @@ def verificar_admin_y_eliminar_comandas_eliminadas(request):
         username = data.get('username')
         password = data.get('password')
 
-        user = authenticate(username=username, password=password)
+        session_user = request.user if request.user.is_authenticated else None
+        user = None
 
-        if user is None or (user.username != 'admin' and not user.groups.filter(name='Dueños').exists()):
+        username = (username or '').strip()
+        password = (password or '').strip()
+
+        if session_user and _user_is_owner(session_user) and (
+            (not username and not password) or
+            (username == session_user.username and not password)
+        ):
+            user = session_user
+        else:
+            user = authenticate(username=username, password=password)
+
+        if user is None or (user.username != 'admin' and not _user_is_owner(user)):
             return JsonResponse({'success': False, 'error': 'Credenciales incorrectas o sin permisos.'})
 
         EliminacionComanda.objects.all().delete()
@@ -1182,7 +1436,10 @@ def comandas_eliminadas(request):
     paginator = Paginator(todas, 16)  # 50 por página
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
-    return render(request, 'core/comandas_eliminadas.html', {'comandas': page_obj})
+    return render(request, 'core/comandas_eliminadas.html', {
+        'comandas': page_obj,
+        'es_owner_actual': _user_is_owner(request.user),
+    })
 
 @login_required(login_url='login')
 def comandas_eliminadas_json(request):

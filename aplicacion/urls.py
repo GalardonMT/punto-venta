@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from core.views import imprimir_boleta_comanda, login_vista, historial_comanda_detalle, comandas_por_usuario, eliminar_usuario,reabrir_comanda, cambiar_estado_usuario, editar_usuario, registro, inicio, productos, usuarios, verificar_admin_y_eliminar_comandas_eliminadas, comandas_eliminadas_json, imprimir_boleta_ventas_dia, comandas_eliminadas, exportar_reportes_anual,comandas_por_usuario, venta, eliminar_categoria, crear_categoria, reportes, eliminar_producto,verificar_y_eliminar_comanda, cerrar_caja, editar_producto, logout_view, nueva_comanda, agregar_a_comanda, guardar_comanda, comandas_json, comanda_detalle, eliminar_comanda, editar_comanda, verificar_superusuario, api_usuario_detalle, exportar_reportes_mes
+from core.views import imprimir_boleta_comanda, login_vista, historial_comanda_detalle, comandas_por_usuario, eliminar_usuario,reabrir_comanda, cambiar_estado_usuario, editar_usuario, registro, inicio, productos, usuarios, verificar_admin_y_eliminar_comandas_eliminadas, comandas_eliminadas_json, imprimir_boleta_ventas_dia, comandas_eliminadas, exportar_reportes_anual,comandas_por_usuario, venta, eliminar_categoria, crear_categoria, reportes, eliminar_producto,verificar_y_eliminar_comanda, cerrar_caja, editar_producto, logout_view, nueva_comanda, agregar_a_comanda, guardar_comanda, comandas_json, comanda_detalle, eliminar_comanda, editar_comanda, verificar_superusuario, api_usuario_detalle, exportar_reportes_mes, siguiente_numero_cliente, clientes, crear_cliente, buscar_cliente_por_telefono, editar_cliente, eliminar_cliente
 from core import views
 #staticos
 from django.conf import settings
@@ -40,10 +40,16 @@ urlpatterns = [
     path('nueva-comanda/', nueva_comanda, name='nueva_comanda'),
     path('venta/<int:comanda_id>/agregar/', agregar_a_comanda, name='agregar_a_comanda'),
     path('productos/', productos, name='productos'),
+    path('clientes/', clientes, name='clientes'),
+    path('clientes/crear/', crear_cliente, name='crear_cliente'),
+    path('clientes/editar/<int:cliente_id>/', editar_cliente, name='editar_cliente'),
+    path('clientes/eliminar/<int:cliente_id>/', eliminar_cliente, name='eliminar_cliente'),
+    path('clientes/buscar-por-telefono/', buscar_cliente_por_telefono, name='buscar_cliente_por_telefono'),
     path('productos/eliminar/<int:producto_id>/', eliminar_producto, name='eliminar_producto'),
     path('productos/editar/<int:producto_id>/', editar_producto, name='editar_producto'),
     path('guardar_comanda/', guardar_comanda, name='guardar_comanda'),
     path('comandas-json/', comandas_json, name='comandas_json'),
+    path('siguiente-numero-cliente/', siguiente_numero_cliente, name='siguiente_numero_cliente'),
     path('comanda-detalle/<int:comanda_id>/', comanda_detalle, name='comanda_detalle'),
     path('eliminar-comanda/<int:comanda_id>/', eliminar_comanda, name='eliminar_comanda'),
     path('crear_categoria/', crear_categoria, name='crear_categoria'),

@@ -158,9 +158,10 @@
             <a href="{% url 'inicio' %}"><button class="nav-button{% if current_url == 'inicio' %} activo{% endif %}">Inicios</button></a>
             <a href="{% url 'venta' %}"><button class="nav-button{% if current_url == 'venta' %} activo{% endif %}">Punto de venta</button></a>
             
-            <!-- Boton solo puede ser visto por admin o por dueños -->
-            {% if request.user|has_group:"Dueños" %}
+            <!-- Boton solo puede ser visto por admin o por dueños (incluye superusuarios) -->
+            {% if request.user.is_superuser or request.user|has_group:"Dueños" %}
                 <a href="{% url 'productos' %}"><button class="nav-button{% if current_url == 'productos' %} activo{% endif %}">Productos</button></a>
+                <a href="{% url 'clientes' %}"><button class="nav-button{% if current_url == 'clientes' %} activo{% endif %}">Clientes</button></a>
                 <a href="{% url 'reportes' %}"><button class="nav-button{% if current_url == 'reportes' %} activo{% endif %}">Reportes</button></a>
                 <a href="{% url 'usuarios' %}"><button class="nav-button{% if current_url == 'usuarios' %} activo{% endif %}">Usuarios</button></a>
             {% endif %}

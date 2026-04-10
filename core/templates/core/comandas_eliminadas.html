@@ -134,6 +134,8 @@
 <script>
 window.csrfToken = '{{ csrf_token }}';
 window.eliminarComandasUrl = "{% url 'eliminar_comandas_con_verificacion' %}";
+window.currentUsername = "{{ request.user.username|escapejs }}";
+window.currentIsOwner = "{{ es_owner_actual|yesno:'true,false' }}" === "true";
 </script>
 <script src="{% static 'core/js/comandas_eliminadas.js' %}"></script>
 {% endblock %}

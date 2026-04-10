@@ -17,8 +17,28 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombre
 
+
+class Cliente(models.Model):
+    nombre = models.CharField(max_length=100)
+    telefono = models.CharField(max_length=30)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombre
+
+
+class DireccionCliente(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones')
+    direccion = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.cliente.nombre}: {self.direccion}"
+
 class Comanda(models.Model):
     nombre_cliente = models.CharField(max_length=100, default="No asignado")
+    telefono_cliente = models.CharField(max_length=30, blank=True, null=True)
+    direccion_cliente = models.CharField(max_length=255, blank=True, null=True)
+    numero_cliente = models.PositiveIntegerField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=50, choices=[('abierta','Abierta'),('cerrada','Cerrada')], default='abierta')
     total = models.IntegerField()
@@ -92,6 +112,9 @@ class DetalleComanda(models.Model):
 class HistorialComanda(models.Model):
     fecha = models.DateTimeField()
     nombre_cliente = models.CharField(max_length=100)
+    telefono_cliente = models.CharField(max_length=30, blank=True, null=True)
+    direccion_cliente = models.CharField(max_length=255, blank=True, null=True)
+    numero_cliente = models.PositiveIntegerField(blank=True, null=True)
     empleado = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ventas_realizadas')
     total = models.IntegerField()
     metodo_pago = models.CharField(max_length=50)

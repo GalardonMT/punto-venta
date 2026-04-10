@@ -1,3 +1,38 @@
+const OWNER_PASSWORD_PLACEHOLDER = '********';
+
+function autocompletarCredencialesAdmin() {
+    if (!window.currentIsOwner) return;
+
+    const usuarioInput = document.getElementById('adminUsuario');
+    const passwordInput = document.getElementById('adminPass');
+
+    if (usuarioInput && !usuarioInput.value) {
+        usuarioInput.value = window.currentUsername || '';
+    }
+
+    if (passwordInput && !passwordInput.value) {
+        passwordInput.value = OWNER_PASSWORD_PLACEHOLDER;
+    }
+}
+
+function normalizarCredencialesAdmin(usuario, password) {
+    let normalizedUsuario = (usuario || '').trim();
+    let normalizedPassword = password || '';
+
+    if (window.currentIsOwner && normalizedPassword === OWNER_PASSWORD_PLACEHOLDER) {
+        normalizedPassword = '';
+    }
+
+    if (window.currentIsOwner && !normalizedUsuario && !normalizedPassword) {
+        normalizedUsuario = window.currentUsername || '';
+    }
+
+    return {
+        usuario: normalizedUsuario,
+        password: normalizedPassword,
+    };
+}
+
 function cerrarModalDetalle() {
     document.getElementById('modalDetalleEliminada').style.display = 'none';
 }
@@ -9,8 +44,14 @@ function cerrarModalAdmin() {
 
 async function verificarAdmin(event) {
     event.preventDefault();
-    const usuario = document.getElementById('adminUsuario').value;
-    const password = document.getElementById('adminPass').value;
+    const usuarioInput = document.getElementById('adminUsuario');
+    const passwordInput = document.getElementById('adminPass');
+    const credentials = normalizarCredencialesAdmin(
+        usuarioInput ? usuarioInput.value : '',
+        passwordInput ? passwordInput.value : ''
+    );
+    const usuario = credentials.usuario;
+    const password = credentials.password;
 
     try {
         const response = await fetch(window.eliminarComandasUrl, {
@@ -64,6 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const modalAdmin = document.getElementById('modalVerificacionAdmin');
 
     btnEliminarTodas.addEventListener('click', () => {
+        autocompletarCredencialesAdmin();
         modalAdmin.style.display = 'flex';
     });
 });
